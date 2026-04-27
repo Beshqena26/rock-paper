@@ -973,29 +973,29 @@
 
     /* Board */
     .board {
-      min-height: 495px;
+      min-height: auto;
       flex-shrink: 0;
     }
 
-    /* Stages — 370px tall on mobile */
-    .stages-zone { height: 370px; }
-    .center-line { height: 56px; }
+    /* Stages — compact on mobile */
+    .stages-zone { height: 280px; }
+    .center-line { height: 40px; }
 
-    /* Stage column — 150px wide, cards 70×90 */
+    /* Stage column — smaller cards */
     .stage {
-      width: 150px;
-      height: 300px;
-      padding: 10px 1px;
+      width: 120px;
+      height: 230px;
+      padding: 8px 1px;
     }
-    .stages-track { padding: 35px 0; }
+    .stages-track { padding: 25px 0; }
 
     .card {
-      width: 70px;
-      height: 90px;
-      border-radius: 7.2px;
-      box-shadow: 0 4px 0 0 var(--card-shadow);
+      width: 58px;
+      height: 75px;
+      border-radius: 6px;
+      box-shadow: 0 3px 0 0 var(--card-shadow);
     }
-    .card-emoji { width: 48px; height: 64px; }
+    .card-emoji { width: 40px; height: 54px; }
 
     .mult {
       width: 60px;
@@ -1006,28 +1006,28 @@
     /* Top circuit chip is smaller (45×31 in mobile Figma) */
     .top-circuit { width: 45px; height: 31px; }
 
-    /* Player zone — 125px tall, smaller pad and buttons */
+    /* Player zone — compact on mobile */
     .player-zone {
-      height: 125px;
-      padding-bottom: 15px;
+      height: 110px;
+      padding-bottom: 10px;
     }
     .pad {
-      padding: 18px;
-      gap: 15px;
+      padding: 14px;
+      gap: 12px;
     }
     .pick-btn {
-      width: 60px; height: 60px;
-      border-radius: 12px;
+      width: 55px; height: 55px;
+      border-radius: 10px;
     }
-    .pick-btn .ico { width: 32px; height: 32px; }
+    .pick-btn .ico { width: 28px; height: 28px; }
 
     /* SIDE panel — now below the board */
     .side {
       width: 100%;
       border-right: none;
       border-top: 1px solid var(--hairline);
-      padding: 30px 20px 25px;
-      gap: 10px;
+      padding: 16px 20px 70px;
+      gap: 8px;
     }
 
     /* On mobile the side panel reorders its children:
