@@ -990,28 +990,27 @@
     .stages-track { padding: 15px 0; height: 100%; }
     .top-circuit { width: 45px; height: 31px; }
 
-    /* Stage — show current + next card side by side */
+    /* Stage columns & cards */
     .stage {
-      width: 46vw;
+      width: 130px;
       height: 100%;
-      padding: 10px 1px;
+      padding: 8px 1px;
     }
-    /* Bigger cards on mobile */
     .card {
-      width: 90px;
-      height: 116px;
-      border-radius: 10px;
-      box-shadow: 0 4px 0 0 var(--card-shadow);
+      width: 65px;
+      height: 84px;
+      border-radius: 8px;
+      box-shadow: 0 3px 0 0 var(--card-shadow);
       transform: none;
     }
     .card-emoji {
-      width: 55px;
-      height: 74px;
+      width: 42px;
+      height: 56px;
     }
     .mult {
-      width: 80px;
-      height: 26px;
-      font-size: 12px;
+      width: 64px;
+      height: 24px;
+      font-size: 10px;
     }
 
     /* Player zone — fluid */
@@ -1075,7 +1074,7 @@
      SMALL PHONES (≤480px) — extra compact
      =========================================================== */
   @media (max-width: 480px) {
-    .stage { width: 50vw; }
+    .stage { width: 110px; }
     .card { width: 80px; height: 103px; }
     .card-emoji { width: 48px; height: 64px; }
     .mult { width: 72px; height: 24px; font-size: 11px; }
@@ -1358,15 +1357,7 @@
     if (!s) return;
     const stripRect = stripEl.getBoundingClientRect();
     const sRect = s.getBoundingClientRect();
-    const isMobile = window.innerWidth <= 860;
-    let offset;
-    if (isMobile) {
-      // Align active stage to left with small padding — shows current + next
-      offset = sRect.left - stripRect.left + stripEl.scrollLeft - 16;
-    } else {
-      // Desktop: center the active stage
-      offset = sRect.left - stripRect.left + stripEl.scrollLeft - (stripRect.width / 2 - sRect.width / 2);
-    }
+    const offset = sRect.left - stripRect.left + stripEl.scrollLeft - (stripRect.width / 2 - sRect.width / 2);
     stripEl.scrollTo({ left: offset, behavior: 'smooth' });
   }
 
