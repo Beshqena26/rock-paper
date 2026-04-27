@@ -358,6 +358,27 @@
     text-transform: capitalize;
   }
   .header-title .game-name .ico { font-size: 14px; }
+  .header-balance {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+  }
+  .header-bal-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .header-bal-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+  }
   .fairplay {
     display: flex; align-items: center; gap: 6px;
     padding: 11px;
@@ -481,29 +502,6 @@
     color: var(--text-mid);
   }
 
-  /* ============= BALANCE DISPLAY ============= */
-  .balance-wrap {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    background: linear-gradient(180deg, var(--input-bg-from) 0%, var(--input-bg-to) 100%);
-    border: 1px solid var(--input-border);
-    border-radius: 6px;
-  }
-  .balance-wrap .label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-mid);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .balance-wrap .balance-value {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-  }
 
   /* ============= SOUND TOGGLE ============= */
   .sound-toggle {
@@ -968,8 +966,24 @@
     .main { order: 1; flex: 0 0 auto; }
     .side { order: 2; flex: 0 0 auto; }
 
-    /* Header */
-    .header { height: 50px; padding: 0 5px 1px 0; }
+    /* Header — fixed on mobile */
+    .header {
+      height: 50px;
+      padding: 0 5px 1px 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: var(--panel);
+      border-bottom: 1px solid var(--hairline);
+    }
+    /* Offset content below fixed header */
+    .main { padding-top: 50px; }
+    .header-title .game-name span:last-child { display: none; }
+    .header-balance { padding: 5px 10px; }
+    .header-bal-label { display: none; }
+    .header-bal-value { font-size: 13px; }
 
     /* Board */
     .board {
@@ -1033,12 +1047,11 @@
     /* On mobile the side panel reorders its children:
        1. Balance + Bet Amount  2. Payout  3. Place Bet / Cash Out
        4. Toggle (bottom) */
-    .side .balance-wrap     { order: 1; }
-    .side .bet-amount-wrap  { order: 2; }
-    .side .payout           { order: 3; }
-    .side .place-btn        { order: 4; }
-    .side .cashout-btn      { order: 4; }
-    .side .toggle           { order: 5; }
+    .side .bet-amount-wrap  { order: 1; }
+    .side .payout           { order: 2; }
+    .side .place-btn        { order: 3; }
+    .side .cashout-btn      { order: 3; }
+    .side .toggle           { order: 4; }
 
     /* Bottom bar — fixed to bottom on mobile */
     .bottom {
@@ -1078,11 +1091,6 @@
     <div class="row">
       <!-- ============= LEFT PANEL ============= -->
       <aside class="side">
-        <div class="balance-wrap">
-          <span class="label">Balance</span>
-          <span class="balance-value" id="balance-display">$1,000.00</span>
-        </div>
-
         <div class="toggle">
           <button class="active">Manual</button>
           <button>Auto</button>
@@ -1120,6 +1128,10 @@
           <div class="header-title">
             <div class="info">i</div>
             <div class="game-name"><span class="ico">✊</span><span>Rock Paper Scissors</span></div>
+          </div>
+          <div class="header-balance">
+            <span class="header-bal-label">Balance</span>
+            <span class="header-bal-value" id="balance-display">$1,000.00</span>
           </div>
           <div class="fairplay">Fair Play</div>
         </div>
