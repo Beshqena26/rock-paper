@@ -333,7 +333,7 @@
     background: var(--panel);
     border-bottom: 1px solid var(--hairline);
     padding: 0 16px;
-    display: none; /* hidden on desktop — info moves to side panel */
+    display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
@@ -433,9 +433,9 @@
     flex-shrink: 0;
   }
 
-  /* Side panel header — shown on desktop/landscape instead of top header */
+  /* Side panel header — only on mobile where there's no top header */
   .side-header {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 10px;
     padding-bottom: 12px;
@@ -1525,9 +1525,9 @@
       width: 100%; height: 100vh; height: 100dvh;
       border-radius: 0; box-shadow: none;
     }
-    /* Show top header on mobile, hide side header */
-    .header { display: flex; }
-    .side-header { display: none; }
+    /* On mobile: hide header from game area, show side-header instead */
+    .header { display: none; }
+    .side-header { display: flex; }
     /* Stack: header(fixed) → scrollable(main + side + bottom) */
     .row {
       flex-direction: column;
@@ -1631,14 +1631,17 @@
       border-radius: 0; box-shadow: none;
     }
 
-    /* Hide top header in landscape — info is in side panel */
-    .header { display: none; }
-    .side-header { display: flex; padding-bottom: 8px; margin-bottom: 2px; gap: 6px; }
-    .side-header-top .game-name { font-size: 11px; }
-    .side-header-top .game-name .ico { font-size: 12px; }
-    .side-balance { padding: 5px 8px; }
-    .side-balance-label { font-size: 9px; }
-    .side-balance-value { font-size: 12px; }
+    /* Show top header in landscape, hide side header */
+    .header { display: flex; height: 36px; padding: 0 10px; }
+    .header-left .game-name { font-size: 11px; }
+    .header-left .game-name .ico { font-size: 12px; }
+    .header-balance { padding: 3px 10px 3px 7px; }
+    .header-bal-icon { font-size: 10px; width: 14px; height: 14px; }
+    .header-bal-value { font-size: 11px; }
+    .fairplay { font-size: 0; padding: 4px 6px; gap: 0; }
+    .fairplay::before { width: 10px; height: 12px; }
+    .header-right .info { width: 24px; height: 24px; font-size: 9px; }
+    .side-header { display: none; }
 
     /* Side-by-side layout like desktop */
     .row {
@@ -1739,21 +1742,6 @@
 </head>
 <body>
   <div class="app">
-    <!-- Header — always visible at top -->
-    <div class="header">
-      <div class="header-left">
-        <div class="game-name"><span class="ico">✊</span><span>Rock Paper Scissors</span></div>
-      </div>
-      <div class="header-balance">
-        <span class="header-bal-icon">💰</span>
-        <span class="header-bal-value" id="balance-display">$1,000.00</span>
-      </div>
-      <div class="header-right">
-        <div class="fairplay">Fair Play</div>
-        <div class="info">i</div>
-      </div>
-    </div>
-
     <!-- Scrollable content -->
     <div class="row">
       <!-- ============= LEFT PANEL ============= -->
@@ -1879,6 +1867,21 @@
 
       <!-- ============= MAIN ============= -->
       <main class="main">
+        <!-- Header — part of game table area -->
+        <div class="header">
+          <div class="header-left">
+            <div class="game-name"><span class="ico">✊</span><span>Rock Paper Scissors</span></div>
+          </div>
+          <div class="header-balance">
+            <span class="header-bal-icon">💰</span>
+            <span class="header-bal-value" id="balance-display">$1,000.00</span>
+          </div>
+          <div class="header-right">
+            <div class="fairplay">Fair Play</div>
+            <div class="info">i</div>
+          </div>
+        </div>
+
         <!-- Board -->
         <div class="board" id="board">
 
