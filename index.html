@@ -1408,15 +1408,16 @@
       width: 100%; height: 100vh; height: 100dvh;
       border-radius: 0; box-shadow: none;
     }
-    /* Stack: header(fixed) → main(fixed) + side(scrollable) → bottom(fixed) */
+    /* Stack: header(fixed) → scrollable(main + side + bottom) */
     .row {
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .main { order: 1; flex: 0 0 auto; overflow: visible; }
     .side {
       order: 2;
-      flex: 1 1 auto;
+      flex: 0 0 auto;
       width: 100%;
       border-right: none;
       border-top: 1px solid var(--hairline);
@@ -1440,7 +1441,7 @@
     /* Board — fixed, not scrollable */
     .board { flex: 0 0 auto; }
     .status { display: none; }
-    .stages-zone { height: 344px; }
+    .stages-zone { height: 300px; }
     .center-line { height: 40px; }
     .stages-track { padding: 10px 0; height: 100%; }
 
@@ -1461,8 +1462,13 @@
     .pick-btn { width: 55px; height: 55px; border-radius: 10px; }
     .pick-btn .ico { width: 28px; height: 28px; }
 
-    /* Bottom bar compact */
-    .bottom { height: 40px; padding: 0 14px; }
+    /* Bottom bar — scrolls with content, not fixed */
+    .bottom {
+      order: 3;
+      height: 40px;
+      padding: 0 14px;
+      flex-shrink: 0;
+    }
 
     /* Mobile animations (no scale) */
     @keyframes shake {
@@ -1483,7 +1489,7 @@
      SMALL PHONES (≤480px) — extra compact
      =========================================================== */
   @media (max-width: 480px) {
-    .stages-zone { height: 344px; }
+    .stages-zone { height: 300px; }
     .stage { width: 110px; height: 100%; }
     .card { width: 56px; height: 72px; }
     .card-emoji { width: 36px; height: 48px; }
@@ -1649,156 +1655,139 @@
           </div>
 
         </div>
-
-        <!-- Game Info Modal -->
-        <div class="modal-overlay" id="game-info-modal">
-          <div class="modal">
-            <button class="modal-close" id="modal-close">&times;</button>
-            <h2>Game Info</h2>
-            <div class="modal-payout-box">
-              <span class="label">Max Win</span>
-              <span class="value">$10,000.00</span>
-            </div>
-            <div class="modal-payout-box">
-              <span class="label">Bet Range</span>
-              <span class="value">$1.00 — $100.00</span>
-            </div>
-
-            <div class="info-box">
-              <span class="info-icon">🎮</span>
-              <p>Rock Paper Scissors is a multiplier climbing game. Compete against the house in classic RPS rounds — each win increases your payout. Cash out anytime or risk it all.</p>
-            </div>
-
-            <h3>How to Play</h3>
-            <ul>
-              <li><strong>Place a bet</strong> — enter your amount and click Place Bet.</li>
-              <li><strong>Pick your hand</strong> — choose Rock ✊, Paper ✋, or Scissors ✌️.</li>
-              <li><strong>Win</strong> — multiplier increases. Cash out or keep going.</li>
-              <li><strong>Tie</strong> — moves to next card, same multiplier. Ties are free.</li>
-              <li><strong>Lose</strong> — you lose your bet. Game over.</li>
-              <li><strong>Cash out</strong> — collect winnings anytime after first win.</li>
-              <li><strong>Cancel</strong> — before first pick, cancel to get your bet back.</li>
-            </ul>
-
-            <h3>Rules</h3>
-            <ul>
-              <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
-              <li>Each win compounds the multiplier up to 100x.</li>
-              <li>Ties don't count — extra cards are added dynamically.</li>
-              <li>7 wins = Maxed Out (100x). Must win 1 round to cash out.</li>
-            </ul>
-
-            <h3>Multiplier Table</h3>
-            <table class="mult-table">
-              <tr><th>Win</th><th>Multiplier</th><th>$100 bet</th></tr>
-              <tr><td>Win 1</td><td>1.93x</td><td>$193</td></tr>
-              <tr><td>Win 2</td><td>3.73x</td><td>$373</td></tr>
-              <tr><td>Win 3</td><td>7.20x</td><td>$720</td></tr>
-              <tr><td>Win 4</td><td>13.89x</td><td>$1,389</td></tr>
-              <tr><td>Win 5</td><td>26.83x</td><td>$2,683</td></tr>
-              <tr><td>Win 6</td><td>51.79x</td><td>$5,179</td></tr>
-              <tr><td>Win 7</td><td>100.00x ⭐</td><td>$10,000</td></tr>
-            </table>
-
-            <h3>House Edge &amp; RTP</h3>
-            <div class="info-box">
-              <span class="info-icon">📊</span>
-              <p><strong>RTP: 96.5%</strong> — House edge is 3.5% per round. Base multiplier is 1.93x. 7 wins reaches 100x. Max bet $100, max win $10,000.</p>
-            </div>
-
-            <h3>Tips</h3>
-            <ul>
-              <li>Every outcome is provably fair — click Fair Play to verify.</li>
-              <li>Each round is independent — previous results don't affect future ones.</li>
-              <li>Higher multipliers = higher risk. Cash out when comfortable.</li>
-              <li>Ties are free — more gameplay at no cost.</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Provably Fair Modal -->
-        <div class="modal-overlay" id="pf-modal">
-          <div class="modal">
-            <button class="modal-close" id="pf-close">&times;</button>
-            <h2>Provably Fair</h2>
-            <p class="pf-desc">This game uses <strong>Provably Fair</strong> technology to determine the game result. This tool gives you the ability to change your seed and check fairness of the game.</p>
-
-            <div class="pf-section">
-              <div class="pf-label"><span class="pf-icon">🖥</span> Next client seed:</div>
-              <div class="pf-sublabel">Generated on your side</div>
-              <div class="pf-toggle-row">
-                <button class="pf-toggle-btn active" id="pf-random-mode">Random every game</button>
-                <button class="pf-toggle-btn" id="pf-nonce-mode">Add nonce</button>
-              </div>
-              <div class="pf-input-row">
-                <input type="text" id="pf-client-seed" value="" readonly />
-                <button class="pf-btn-sm" id="pf-copy-client" title="Copy">CP</button>
-                <button class="pf-btn-sm" id="pf-regen-client" title="Regenerate">R</button>
-              </div>
-              <button class="pf-save-btn" id="pf-save-seed">Save Seed</button>
-            </div>
-
-            <div class="pf-section">
-              <div class="pf-label"><span class="pf-icon">🖥</span> Next server seed SHA256:</div>
-              <div class="pf-sublabel">Encrypted seed, generated on our side</div>
-              <div class="pf-hash-box" id="pf-server-hash">loading...</div>
-              <div class="pf-cp-row">
-                <button class="pf-btn-sm" id="pf-copy-hash" title="Copy">CP</button>
-                <button class="pf-btn-sm" id="pf-reveal-seed" title="Reveal (after game)">R</button>
-              </div>
-              <p class="pf-note">This hash is committed <strong>before</strong> you bet. After the roll, the server seed is revealed and you can verify SHA256(seed) matches this hash.</p>
-            </div>
-
-            <div class="pf-how">
-              <div class="pf-how-title">How it works</div>
-              <ol>
-                <li>Server generates a seed and shows you its SHA256 hash</li>
-                <li>You set your client seed (your influence on randomness)</li>
-                <li>You place a bet</li>
-                <li>Roll = HMAC-SHA256(server_seed, your_seed:0)</li>
-                <li>Server reveals the seed — verify SHA256 matches</li>
-                <li>New seed pre-generated for next bet</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-
       </main>
-    </div>
 
-    <!-- Bottom bar — always visible at bottom -->
-    <div class="bottom">
-      <div class="bottom-icons">
-        <div class="ic sound-toggle" id="sound-toggle" title="Toggle Sound">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path class="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
-          </svg>
+      <!-- Bottom bar -->
+      <div class="bottom">
+        <div class="bottom-icons">
+          <div class="ic sound-toggle" id="sound-toggle" title="Toggle Sound">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path class="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </div>
+          <div class="ic" title="Settings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <div class="ic" title="Fullscreen">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/>
+            </svg>
+          </div>
+          <div class="ic" title="Favorite">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
         </div>
-        <div class="ic" title="Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </div>
-        <div class="ic" title="Keyboard">
-          <svg width="17" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="6" width="20" height="12" rx="2"/>
-            <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/>
-          </svg>
-        </div>
-        <div class="ic" title="Fullscreen">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/>
-          </svg>
-        </div>
-        <div class="ic" title="Favorite">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-        </div>
+        <div class="bottom-logo">MYBC</div>
       </div>
-      <div class="bottom-logo">MYBC</div>
+    </div>
+  </div>
+
+  <!-- Modals — outside .app to avoid overflow clipping -->
+  <div class="modal-overlay" id="game-info-modal">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <h2>Game Info</h2>
+      <div class="modal-payout-box">
+        <span class="label">Max Win</span>
+        <span class="value">$10,000.00</span>
+      </div>
+      <div class="modal-payout-box">
+        <span class="label">Bet Range</span>
+        <span class="value">$1.00 — $100.00</span>
+      </div>
+      <div class="info-box">
+        <span class="info-icon">🎮</span>
+        <p>Rock Paper Scissors is a multiplier climbing game. Compete against the house in classic RPS rounds — each win increases your payout. Cash out anytime or risk it all.</p>
+      </div>
+      <h3>How to Play</h3>
+      <ul>
+        <li><strong>Place a bet</strong> — enter your amount and click Place Bet.</li>
+        <li><strong>Pick your hand</strong> — choose Rock ✊, Paper ✋, or Scissors ✌️.</li>
+        <li><strong>Win</strong> — multiplier increases. Cash out or keep going.</li>
+        <li><strong>Tie</strong> — moves to next card, same multiplier. Ties are free.</li>
+        <li><strong>Lose</strong> — you lose your bet. Game over.</li>
+        <li><strong>Cash out</strong> — collect winnings anytime after first win.</li>
+        <li><strong>Cancel</strong> — before first pick, cancel to get your bet back.</li>
+      </ul>
+      <h3>Rules</h3>
+      <ul>
+        <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
+        <li>Each win compounds the multiplier up to 100x.</li>
+        <li>Ties don't count — extra cards are added dynamically.</li>
+        <li>7 wins = Maxed Out (100x). Must win 1 round to cash out.</li>
+      </ul>
+      <h3>Multiplier Table</h3>
+      <table class="mult-table">
+        <tr><th>Win</th><th>Multiplier</th><th>$100 bet</th></tr>
+        <tr><td>Win 1</td><td>1.93x</td><td>$193</td></tr>
+        <tr><td>Win 2</td><td>3.73x</td><td>$373</td></tr>
+        <tr><td>Win 3</td><td>7.20x</td><td>$720</td></tr>
+        <tr><td>Win 4</td><td>13.89x</td><td>$1,389</td></tr>
+        <tr><td>Win 5</td><td>26.83x</td><td>$2,683</td></tr>
+        <tr><td>Win 6</td><td>51.79x</td><td>$5,179</td></tr>
+        <tr><td>Win 7</td><td>100.00x ⭐</td><td>$10,000</td></tr>
+      </table>
+      <h3>House Edge &amp; RTP</h3>
+      <div class="info-box">
+        <span class="info-icon">📊</span>
+        <p><strong>RTP: 96.5%</strong> — House edge is 3.5% per round. Base multiplier is 1.93x. 7 wins reaches 100x. Max bet $100, max win $10,000.</p>
+      </div>
+      <h3>Tips</h3>
+      <ul>
+        <li>Every outcome is provably fair — click Fair Play to verify.</li>
+        <li>Each round is independent — previous results don't affect future ones.</li>
+        <li>Higher multipliers = higher risk. Cash out when comfortable.</li>
+        <li>Ties are free — more gameplay at no cost.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="pf-modal">
+    <div class="modal">
+      <button class="modal-close" id="pf-close">&times;</button>
+      <h2>Provably Fair</h2>
+      <p class="pf-desc">This game uses <strong>Provably Fair</strong> technology to determine the game result. This tool gives you the ability to change your seed and check fairness of the game.</p>
+      <div class="pf-section">
+        <div class="pf-label"><span class="pf-icon">🖥</span> Next client seed:</div>
+        <div class="pf-sublabel">Generated on your side</div>
+        <div class="pf-toggle-row">
+          <button class="pf-toggle-btn active" id="pf-random-mode">Random every game</button>
+          <button class="pf-toggle-btn" id="pf-nonce-mode">Add nonce</button>
+        </div>
+        <div class="pf-input-row">
+          <input type="text" id="pf-client-seed" value="" readonly />
+          <button class="pf-btn-sm" id="pf-copy-client" title="Copy">CP</button>
+          <button class="pf-btn-sm" id="pf-regen-client" title="Regenerate">R</button>
+        </div>
+        <button class="pf-save-btn" id="pf-save-seed">Save Seed</button>
+      </div>
+      <div class="pf-section">
+        <div class="pf-label"><span class="pf-icon">🖥</span> Next server seed SHA256:</div>
+        <div class="pf-sublabel">Encrypted seed, generated on our side</div>
+        <div class="pf-hash-box" id="pf-server-hash">loading...</div>
+        <div class="pf-cp-row">
+          <button class="pf-btn-sm" id="pf-copy-hash" title="Copy">CP</button>
+          <button class="pf-btn-sm" id="pf-reveal-seed" title="Reveal (after game)">R</button>
+        </div>
+        <p class="pf-note">This hash is committed <strong>before</strong> you bet. After the roll, the server seed is revealed and you can verify SHA256(seed) matches this hash.</p>
+      </div>
+      <div class="pf-how">
+        <div class="pf-how-title">How it works</div>
+        <ol>
+          <li>Server generates a seed and shows you its SHA256 hash</li>
+          <li>You set your client seed (your influence on randomness)</li>
+          <li>You place a bet</li>
+          <li>Roll = HMAC-SHA256(server_seed, your_seed:0)</li>
+          <li>Server reveals the seed — verify SHA256 matches</li>
+          <li>New seed pre-generated for next bet</li>
+        </ol>
+      </div>
     </div>
   </div>
 
