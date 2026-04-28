@@ -1472,7 +1472,7 @@
   .banner-overlay.lose .banner-amt { color: var(--text-mid); }
   .banner-overlay.lose .banner-icon::after { content: '😔'; }
 
-  @media (max-width: 860px) {
+  @media (max-width: 860px) and (orientation: portrait) {
     .banner { padding: 20px 28px 16px; min-width: 180px; }
     .banner-icon { font-size: 28px; margin-bottom: 6px; }
     .banner-title { font-size: 14px; }
@@ -1529,7 +1529,7 @@
      PHONE LAYOUT (≤860px)
      Stack vertically, header & bottom bar fixed
      =========================================================== */
-  @media (max-width: 860px) {
+  @media (max-width: 860px) and (orientation: portrait) {
     .app {
       width: 100%; height: 100vh; height: 100dvh;
       border-radius: 0; box-shadow: none;
@@ -1623,7 +1623,7 @@
   /* ===========================================================
      SMALL PHONES (≤480px) — extra compact
      =========================================================== */
-  @media (max-width: 480px) {
+  @media (max-width: 480px) and (orientation: portrait) {
     .stages-zone { height: 300px; }
     .stage { width: 110px; height: 100%; }
     .card { width: 56px; height: 72px; }
@@ -1712,12 +1712,6 @@
     .auto-stop-input { height: 28px; font-size: 11px; }
     .bet-amount-wrap { padding-top: 0; gap: 4px; }
     .manual-panel { gap: 8px; }
-
-    /* Main — fills remaining width */
-    .main {
-      flex: 1 1 auto;
-      overflow: hidden;
-    }
 
     /* Board fills the main area */
     .board { flex: 1; display: flex; flex-direction: column; }
