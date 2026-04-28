@@ -327,13 +327,13 @@
     overflow: hidden;
   }
 
-  /* ============= HEADER — always fixed at top ============= */
+  /* ============= HEADER ============= */
   .header {
     height: 50px;
     background: var(--panel);
     border-bottom: 1px solid var(--hairline);
     padding: 0 16px;
-    display: flex;
+    display: none; /* hidden on desktop — info moves to side panel */
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
@@ -431,6 +431,56 @@
     mask: linear-gradient(white,white);
     clip-path: polygon(50% 0%, 100% 25%, 100% 60%, 50% 100%, 0% 60%, 0% 25%);
     flex-shrink: 0;
+  }
+
+  /* Side panel header — shown on desktop/landscape instead of top header */
+  .side-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .side-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .side-header-top .game-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .side-header-top .game-name .ico { font-size: 14px; }
+  .side-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .side-header .side-balance {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(251,206,4,0.06) 0%, rgba(251,206,4,0.01) 100%);
+    border: 1px solid rgba(251,206,4,0.15);
+    border-radius: 8px;
+  }
+  .side-balance-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .side-balance-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
   }
 
   /* ============= GAME INFO MODAL ============= */
@@ -1475,6 +1525,9 @@
       width: 100%; height: 100vh; height: 100dvh;
       border-radius: 0; box-shadow: none;
     }
+    /* Show top header on mobile, hide side header */
+    .header { display: flex; }
+    .side-header { display: none; }
     /* Stack: header(fixed) → scrollable(main + side + bottom) */
     .row {
       flex-direction: column;
@@ -1578,16 +1631,14 @@
       border-radius: 0; box-shadow: none;
     }
 
-    /* Compact header */
-    .header { height: 36px; padding: 0 10px; }
-    .header-left .game-name { font-size: 11px; }
-    .header-left .game-name .ico { font-size: 12px; }
-    .header-balance { padding: 3px 10px 3px 7px; }
-    .header-bal-icon { font-size: 10px; width: 14px; height: 14px; }
-    .header-bal-value { font-size: 11px; }
-    .fairplay { font-size: 0; padding: 4px 6px; gap: 0; }
-    .fairplay::before { width: 10px; height: 12px; }
-    .header-right .info { width: 24px; height: 24px; font-size: 9px; }
+    /* Hide top header in landscape — info is in side panel */
+    .header { display: none; }
+    .side-header { display: flex; padding-bottom: 8px; margin-bottom: 2px; gap: 6px; }
+    .side-header-top .game-name { font-size: 11px; }
+    .side-header-top .game-name .ico { font-size: 12px; }
+    .side-balance { padding: 5px 8px; }
+    .side-balance-label { font-size: 9px; }
+    .side-balance-value { font-size: 12px; }
 
     /* Side-by-side layout like desktop */
     .row {
@@ -1707,6 +1758,21 @@
     <div class="row">
       <!-- ============= LEFT PANEL ============= -->
       <aside class="side">
+        <!-- Side panel header — visible on desktop/landscape, hidden on mobile -->
+        <div class="side-header">
+          <div class="side-header-top">
+            <div class="game-name"><span class="ico">✊</span><span>Rock Paper Scissors</span></div>
+            <div class="side-header-actions">
+              <div class="fairplay" id="fairplay-side">Fair Play</div>
+              <div class="info" id="info-side">i</div>
+            </div>
+          </div>
+          <div class="side-balance">
+            <span class="side-balance-label">Balance</span>
+            <span class="side-balance-value" id="balance-display-side">$1,000.00</span>
+          </div>
+        </div>
+
         <div class="mode-toggle">
           <button class="active" id="mode-manual">Manual</button>
           <button id="mode-auto">Auto</button>
@@ -2026,6 +2092,7 @@
   const bannerTitle= document.getElementById('banner-title');
   const bannerAmt  = document.getElementById('banner-amt');
   const balanceEl  = document.getElementById('balance-display');
+  const balanceElSide = document.getElementById('balance-display-side');
   const pickBtns   = document.querySelectorAll('.pick-btn');
 
   /* =============================================================
@@ -2050,7 +2117,10 @@
      HELPERS
      ============================================================= */
   function fmt(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-  function updateBalance() { balanceEl.textContent = fmt(balance); }
+  function updateBalance() {
+    balanceEl.textContent = fmt(balance);
+    if (balanceElSide) balanceElSide.textContent = fmt(balance);
+  }
   function getStage(i) { return trackEl.children[i]; }
   function getTotalStages() { return trackEl.children.length; }
 
@@ -2406,12 +2476,15 @@
   const gameInfoModal = document.getElementById('game-info-modal');
   const modalCloseBtn = document.getElementById('modal-close');
   const infoBtn = document.querySelector('.header-right .info');
-  const fairplayBtn = document.querySelector('.fairplay');
+  const infoSideBtn = document.getElementById('info-side');
+  const fairplayBtn = document.querySelector('.header .fairplay');
+  const fairplaySideBtn = document.getElementById('fairplay-side');
 
   function openModal() { gameInfoModal.classList.add('show'); }
   function closeModal() { gameInfoModal.classList.remove('show'); }
 
   infoBtn.addEventListener('click', openModal);
+  if (infoSideBtn) infoSideBtn.addEventListener('click', openModal);
   modalCloseBtn.addEventListener('click', closeModal);
   gameInfoModal.addEventListener('click', (e) => {
     if (e.target === gameInfoModal) closeModal();
@@ -2494,7 +2567,8 @@
   function openPfModal() { pfModal.classList.add('show'); }
   function closePfModal() { pfModal.classList.remove('show'); }
 
-  fairplayBtn.addEventListener('click', openPfModal);
+  if (fairplayBtn) fairplayBtn.addEventListener('click', openPfModal);
+  if (fairplaySideBtn) fairplaySideBtn.addEventListener('click', openPfModal);
   pfCloseBtn.addEventListener('click', closePfModal);
   pfModal.addEventListener('click', (e) => {
     if (e.target === pfModal) closePfModal();
