@@ -1507,6 +1507,14 @@
       width: 100%; height: 100vh; height: 100dvh;
       border-radius: 0; box-shadow: none;
     }
+    /* Header at top, spanning full width */
+    .header {
+      display: flex;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+    }
+    .row { padding-top: 50px; }
     .side { width: 280px; padding: 14px; gap: 8px; }
     .stage { width: 150px; }
     .card { width: 80px; height: 104px; }
@@ -1649,22 +1657,29 @@
     .header-right .info { width: 24px; height: 24px; font-size: 9px; }
     .side-header { display: none; }
 
-    /* Side-by-side layout like desktop */
+    /* Side-by-side layout — game left, panel right */
     .row {
       flex-direction: row;
       overflow: hidden;
     }
 
-    /* Side panel — narrow left column, scrollable */
-    .side {
+    /* Main game — left side */
+    .main {
       order: 0;
+    }
+
+    /* Side panel — right side, scrollable */
+    .side {
+      order: 1;
       width: 248px;
       flex: 0 0 248px;
-      border-right: 1px solid var(--hairline);
+      border-left: 1px solid var(--hairline);
+      border-right: none;
       border-top: none;
-      padding: 8px 10px;
+      padding: 8px 10px 16px;
       gap: 6px;
       overflow-y: auto;
+      overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -1687,7 +1702,6 @@
 
     /* Main — fills remaining width */
     .main {
-      order: 1;
       flex: 1 1 auto;
       overflow: hidden;
     }
