@@ -81,16 +81,17 @@
     color: var(--text);
     font-family: 'Montserrat', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    overflow: auto;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
   }
   body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
   }
 
-  /* ============= APP FRAME — fixed 1168 × 750 desktop ============= */
+  /* ============= APP FRAME — centered box on desktop ============= */
   .app {
     width: 1168px;
     height: 750px;
@@ -101,7 +102,12 @@
     background: var(--panel);
     box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5);
   }
-  .row { display: flex; flex: 1 0 0; min-height: 0; }
+  .row {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
 
   /* ============= LEFT PANEL — 340 px ============= */
   .side {
@@ -109,10 +115,12 @@
     flex-shrink: 0;
     background: var(--panel);
     border-right: 1px solid var(--hairline);
-    padding: 20px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
 
@@ -193,7 +201,7 @@
   .place-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 
-  /* Cashout button — blue, shown only during active play */
+  /* Cashout button — shown only during active play */
   .cashout-btn {
     height: 50px;
     width: 100%;
@@ -206,13 +214,23 @@
     font-size: 14px;
     cursor: pointer;
     filter: drop-shadow(0px 0px 11px var(--accent-glow));
-    transition: all 0.15s;
-    display: none; /* hidden by default; only shown in .playing state */
+    transition: all 0.2s;
+    display: none;
   }
   .cashout-btn:hover:not(:disabled) {
     filter: drop-shadow(0px 0px 16px var(--accent-glow)) brightness(1.05);
   }
-  .cashout-btn:disabled { cursor: not-allowed; }
+  .cashout-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+  /* Green state when cashout is available */
+  .cashout-btn.cashout-ready {
+    background: #0ECC68;
+    border-color: rgba(14,204,104,0.5);
+    filter: drop-shadow(0px 0px 11px rgba(14,204,104,0.25));
+    color: #fff;
+  }
+  .cashout-btn.cashout-ready:hover:not(:disabled) {
+    filter: drop-shadow(0px 0px 16px rgba(14,204,104,0.35)) brightness(1.05);
+  }
 
   /* ============= Payout panel (active play) ============= */
   .payout {
@@ -265,13 +283,12 @@
   .bracket.right { right: 8px; }
 
   /* ============= .playing state ============= */
-  .app.playing .bet-amount-wrap {
+  .app.playing .manual-panel .bet-amount-wrap {
     opacity: 0.5;
     pointer-events: none;
   }
-  .app.playing .payout,
-  .app.playing .cashout-btn { display: block; }
-  .app.playing .place-btn   { display: none; }
+  .app.playing .manual-panel .cashout-btn { display: block; }
+  .app.playing .manual-panel .place-btn   { display: none; }
 
   /* Stats footer in side */
   .stats {
@@ -286,86 +303,119 @@
   .stat-label { font-size: 10px; color: var(--text-dimmer); text-transform: uppercase; letter-spacing: 0.1em; }
   .stat-value { font-size: 16px; font-weight: 600; margin-top: 2px; }
 
-  /* ============= RIGHT SIDE (header + board) ============= */
+  /* ============= RIGHT SIDE (board area) ============= */
   .main {
     flex: 1 0 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
-  /* Header */
+  /* ============= HEADER — always fixed at top ============= */
   .header {
-    height: 46.73px;
+    height: 50px;
     background: var(--panel);
     border-bottom: 1px solid var(--hairline);
-    padding: 0 5px 1px 0;
+    padding: 0 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    z-index: 50;
   }
-  .header-title {
+
+  /* Left — game name */
+  .header-left {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding-left: 15px;
+    gap: 10px;
+    min-width: 0;
   }
-  .header-title .info {
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    border: 1.5px solid var(--text-mid);
-    color: var(--text-mid);
-    font-size: 11px;
-    font-weight: 600;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-  }
-  .header-title .info:hover { border-color: var(--text); color: var(--text); }
-  .header-title .game-name {
+  .header-left .game-name {
     display: flex; align-items: center; gap: 6px;
     font-size: 13px; font-weight: 600; color: var(--text);
-    text-transform: capitalize;
+    white-space: nowrap;
   }
-  .header-title .game-name .ico { font-size: 14px; }
+  .header-left .game-name .ico { font-size: 15px; }
+
+  /* Center — balance (hero element) */
   .header-balance {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--hairline);
-    border-radius: 6px;
+    padding: 5px 16px 5px 12px;
+    background: linear-gradient(135deg, rgba(251,206,4,0.08) 0%, rgba(251,206,4,0.02) 100%);
+    border: 1px solid rgba(251,206,4,0.18);
+    border-radius: 20px;
+    position: relative;
+  }
+  .header-bal-icon {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
   }
   .header-bal-label {
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 600;
     color: var(--text-mid);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
   }
   .header-bal-value {
     font-size: 14px;
     font-weight: 700;
     color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  /* Right — actions */
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-right .info {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--hairline);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-mid);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .header-right .info:hover {
+    border-color: rgba(251,206,4,0.3);
+    color: var(--text);
+    background: rgba(255,255,255,0.06);
   }
   .fairplay {
-    display: flex; align-items: center; gap: 6px;
-    padding: 11px;
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 12px;
+    border: 1px solid rgba(14,204,104,0.2);
+    border-radius: 6px;
+    background: rgba(14,204,104,0.06);
+    color: #0ECC68;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.15s;
+    transition: all 0.15s;
+    white-space: nowrap;
   }
-  .fairplay:hover { opacity: 0.8; }
+  .fairplay:hover {
+    border-color: rgba(14,204,104,0.4);
+    background: rgba(14,204,104,0.1);
+  }
   .fairplay::before {
-    content: ''; width: 14px; height: 16px;
+    content: ''; width: 10px; height: 12px;
     background: #0ECC68;
     -webkit-mask: linear-gradient(white,white);
     mask: linear-gradient(white,white);
     clip-path: polygon(50% 0%, 100% 25%, 100% 60%, 50% 100%, 0% 60%, 0% 25%);
+    flex-shrink: 0;
   }
 
   /* ============= GAME INFO MODAL ============= */
@@ -390,11 +440,11 @@
     background: #141B22;
     border: 1px solid var(--hairline);
     border-radius: 12px;
-    width: 560px;
+    width: 480px;
     max-width: 90vw;
     max-height: 80vh;
     overflow-y: auto;
-    padding: 32px;
+    padding: 24px;
     position: relative;
     transform: scale(0.92);
     transition: transform 0.25s;
@@ -404,75 +454,287 @@
   }
   .modal-close {
     position: absolute;
-    top: 16px; right: 16px;
-    width: 36px; height: 36px;
-    border-radius: 50%;
+    top: 14px; right: 14px;
+    width: 30px; height: 30px;
+    border-radius: 6px;
     background: rgba(255,255,255,0.08);
     border: none;
     color: var(--text-mid);
-    font-size: 18px;
+    font-size: 15px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.15s, color 0.15s;
   }
   .modal-close:hover { background: rgba(255,255,255,0.15); color: var(--text); }
   .modal h2 {
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 700;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
     color: var(--text);
   }
   .modal-payout-box {
     background: rgba(255,255,255,0.04);
     border: 1px solid var(--hairline);
-    border-radius: 8px;
-    padding: 20px 24px;
+    border-radius: 6px;
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 28px;
+    margin-bottom: 16px;
   }
   .modal-payout-box .label {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--text);
   }
   .modal-payout-box .value {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--text);
   }
   .modal h3 {
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 700;
-    margin-bottom: 16px;
-    color: var(--text);
+    margin-bottom: 8px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--hairline);
+    margin-top: 16px;
   }
+  .modal h3:first-of-type { margin-top: 0; }
   .modal p {
-    font-size: 14px;
-    line-height: 1.7;
+    font-size: 12px;
+    line-height: 1.6;
     color: var(--text-75);
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
   .modal ul {
     list-style: none;
     padding: 0;
-    margin: 0 0 8px;
+    margin: 0 0 6px;
   }
   .modal ul li {
-    font-size: 14px;
-    line-height: 1.8;
+    font-size: 11px;
+    line-height: 1.7;
     color: var(--text-75);
-    padding-left: 16px;
+    padding-left: 14px;
     position: relative;
+    margin-bottom: 2px;
   }
   .modal ul li::before {
     content: '\2022';
     position: absolute;
     left: 0;
+    color: var(--accent);
+    font-size: 10px;
+  }
+  .modal ul li strong { color: var(--text); }
+
+  /* Multiplier table in modal */
+  .mult-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+  }
+  .mult-table th {
+    font-size: 10px;
+    font-weight: 600;
     color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .mult-table td {
+    font-size: 11px;
+    padding: 5px 8px;
+    color: var(--text-75);
+    border-bottom: 1px solid rgba(145,159,192,0.06);
+  }
+  .mult-table td:last-child {
+    text-align: right;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .mult-table tr:last-child td { border-bottom: none; }
+  .mult-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+
+  /* Info box highlight */
+  .info-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .info-box .info-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .info-box p {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-75);
   }
 
+
+  /* ============= PROVABLY FAIR MODAL ============= */
+  .pf-desc {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-75);
+    margin-bottom: 16px;
+  }
+  .pf-desc strong { color: var(--text); }
+  .pf-section {
+    margin-bottom: 14px;
+  }
+  .pf-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .pf-label .pf-icon {
+    font-size: 12px;
+    opacity: 0.6;
+  }
+  .pf-sublabel {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .pf-toggle-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .pf-toggle-btn {
+    flex: 1;
+    padding: 7px 12px;
+    background: transparent;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pf-toggle-btn:hover { border-color: var(--text-mid); color: var(--text-mid); }
+  .pf-toggle-btn.active {
+    background: transparent;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .pf-input-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+  }
+  .pf-input-row input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+  .pf-input-row input::placeholder { color: var(--text-dimmer); }
+  .pf-btn-sm {
+    width: 30px;
+    height: 26px;
+    border-radius: 4px;
+    border: 1px solid var(--hairline);
+    background: rgba(255,255,255,0.06);
+    color: var(--text-mid);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .pf-btn-sm:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+  .pf-save-btn {
+    padding: 6px 14px;
+    background: var(--accent);
+    color: #141B22;
+    border: none;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 14px;
+  }
+  .pf-save-btn:hover { filter: brightness(1.1); }
+  .pf-hash-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 9px 11px;
+    margin-bottom: 6px;
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--green);
+  }
+  .pf-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .pf-note strong { color: var(--text); }
+  .pf-how {
+    background: rgba(251,206,4,0.05);
+    border: 1px solid rgba(251,206,4,0.12);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .pf-how-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .pf-how ol {
+    padding-left: 16px;
+    margin: 0;
+  }
+  .pf-how ol li {
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-75);
+  }
+  .pf-cp-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
 
   /* ============= SOUND TOGGLE ============= */
   .sound-toggle {
@@ -831,15 +1093,219 @@
     box-shadow: 0 2px 0 0 rgba(251,206,4,0.1);
   }
 
-  /* ============= BOTTOM BAR ============= */
+  /* ============= MODE TOGGLE (Manual / Auto) ============= */
+  .mode-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline);
+    flex-shrink: 0;
+  }
+  .mode-toggle button {
+    flex: 1;
+    height: 32px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-mid);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-toggle button.active {
+    background: var(--accent);
+    color: #141B22;
+  }
+
+  /* Manual panel (default) */
+  .manual-panel { display: flex; flex-direction: column; gap: 10px; }
+  .app.auto-mode .manual-panel { display: none; }
+
+  /* Auto panel (hidden by default) */
+  .auto-panel { display: none; flex-direction: column; gap: 8px; }
+  .app.auto-mode .auto-panel { display: flex; }
+
+  /* Auto settings section card */
+  .auto-section {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .auto-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  /* Chip group for auto settings */
+  .auto-chips {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .auto-chip {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 4px;
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .auto-chip:hover { border-color: var(--text-mid); color: var(--text); }
+  .auto-chip.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(251,206,4,0.06);
+  }
+
+  /* Pick strategy buttons */
+  .auto-pick-chips { display: flex; gap: 4px; }
+  .auto-pick-chip {
+    flex: 1;
+    height: 34px;
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    background: transparent;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .auto-pick-chip:hover { border-color: var(--text-mid); }
+  .auto-pick-chip.selected {
+    border-color: var(--accent);
+    background: rgba(251,206,4,0.06);
+  }
+
+  /* Stop conditions */
+  .auto-stop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .auto-stop-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .auto-stop-item span {
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .auto-stop-input {
+    height: 30px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    padding: 0 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 11px;
+    outline: none;
+    width: 100%;
+  }
+  .auto-stop-input:focus { border-color: var(--accent); }
+
+  /* Start / Stop auto buttons */
+  .auto-start-btn {
+    height: 44px;
+    width: 100%;
+    background: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: 8px;
+    color: #141B22;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    filter: drop-shadow(0 0 8px rgba(251,206,4,0.2));
+  }
+  .auto-start-btn:hover { filter: drop-shadow(0 0 14px rgba(251,206,4,0.3)) brightness(1.05); }
+  .auto-start-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+  .auto-stop-btn {
+    height: 44px;
+    width: 100%;
+    background: var(--red);
+    border: 1px solid rgba(239,64,96,0.4);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: none;
+    transition: all 0.15s;
+    filter: drop-shadow(0 0 8px rgba(239,64,96,0.2));
+  }
+  .auto-stop-btn:hover { filter: drop-shadow(0 0 14px rgba(239,64,96,0.3)) brightness(1.1); }
+
+  /* Auto progress */
+  .auto-progress {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .auto-progress-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .auto-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+  .auto-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-mid);
+  }
+  .auto-stats b { color: var(--text); }
+  .auto-stats .profit-pos { color: var(--green); font-weight: 700; }
+  .auto-stats .profit-neg { color: var(--red); font-weight: 700; }
+
+  /* Disable controls during auto play */
+  .app.auto-running .mode-toggle { pointer-events: none; opacity: 0.4; }
+  .app.auto-running .pick-btn { pointer-events: none; }
+  .app.auto-running .auto-panel .bet-amount-wrap { opacity: 0.4; pointer-events: none; }
+  .app.auto-running .auto-section { opacity: 0.4; pointer-events: none; }
+
+  /* ============= BOTTOM BAR — always at bottom ============= */
   .bottom {
-    height: 50px;
+    height: 44px;
     background: var(--panel);
     border-top: 1px solid var(--hairline);
     display: flex;
     align-items: center;
-    padding: 1px 20px 0;
+    padding: 0 20px;
     flex-shrink: 0;
+    z-index: 50;
     position: relative;
   }
   .bottom-icons { display: flex; gap: 18px; align-items: center; }
@@ -919,24 +1385,14 @@
      TABLET LAYOUT (861–1024px)
      Side panel on left like desktop, but narrower
      =========================================================== */
-  @media (min-width: 861px) and (max-width: 1168px) {
-    body { padding: 0; }
+  @media (max-width: 1168px) and (min-width: 861px) {
     .app {
-      width: 100%;
-      max-width: 100%;
-      height: 100vh;
-      height: 100dvh;
-      border-radius: 0;
-      box-shadow: none;
+      width: 100%; height: 100vh; height: 100dvh;
+      border-radius: 0; box-shadow: none;
     }
-    .row { flex: 1 0 0; min-height: 0; }
-    .side { width: 280px; padding: 16px; gap: 8px; }
-    .board { flex: 1; display: flex; flex-direction: column; }
-    .stages-zone { flex: 1; height: auto; }
-    .stage { width: 150px; height: 100%; }
-    .stages-track { padding: 20px 0; height: 100%; }
-    .card { width: 80px; height: 104px; transform: scale(0.9); }
-    .card-emoji { width: 55%; }
+    .side { width: 280px; padding: 14px; gap: 8px; }
+    .stage { width: 150px; }
+    .card { width: 80px; height: 104px; }
     .mult { width: 70px; height: 26px; font-size: 11px; }
     .player-zone { height: 160px; }
     .pick-btn { width: 72px; height: 72px; }
@@ -948,112 +1404,65 @@
      Stack vertically, header & bottom bar fixed
      =========================================================== */
   @media (max-width: 860px) {
-    body { padding: 0; align-items: stretch; }
-
     .app {
+      width: 100%; height: 100vh; height: 100dvh;
+      border-radius: 0; box-shadow: none;
+    }
+    /* Stack: header(fixed) → main(fixed) + side(scrollable) → bottom(fixed) */
+    .row {
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .main { order: 1; flex: 0 0 auto; overflow: visible; }
+    .side {
+      order: 2;
+      flex: 1 1 auto;
       width: 100%;
-      max-width: 100%;
-      height: auto;
-      min-height: 100vh;
-      min-height: 100dvh;
-      border-radius: 0;
-      box-shadow: none;
-      padding-bottom: 52px;
+      border-right: none;
+      border-top: 1px solid var(--hairline);
+      padding: 14px 16px;
+      gap: 8px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .row { flex-direction: column; flex: 1 0 auto; }
-    .main { order: 1; flex: 1 1 auto; padding-top: 50px; min-height: 0; }
-    .side { order: 2; flex: 0 0 auto; }
-    .board { flex: 1; display: flex; flex-direction: column; }
+    .side .payout { display: none !important; }
 
-    /* Header — fixed */
-    .header {
-      height: 50px;
-      padding: 0 5px 1px 0;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 50;
-      background: var(--panel);
-      border-bottom: 1px solid var(--hairline);
-    }
-    .header-title .game-name span:last-child { display: none; }
-    .header-balance { padding: 5px 10px; }
-    .header-bal-label { display: none; }
-    .header-bal-value { font-size: 13px; }
+    /* Compact header on mobile */
+    .header { padding: 0 10px; }
+    .header-left .game-name span:last-child { display: none; }
+    .header-balance { padding: 4px 12px 4px 8px; }
+    .header-bal-icon { font-size: 11px; width: 16px; height: 16px; }
+    .header-bal-value { font-size: 12px; }
+    .fairplay { font-size: 0; padding: 6px 8px; gap: 0; }
+    .fairplay::before { width: 12px; height: 14px; }
+    .header-right .info { width: 26px; height: 26px; font-size: 10px; }
 
-    /* Board */
-    .board { min-height: auto; flex-shrink: 0; }
+    /* Board — fixed, not scrollable */
+    .board { flex: 0 0 auto; }
     .status { display: none; }
-
-    /* Stages — fill remaining board space */
-    .stages-zone { flex: 1; height: auto; }
+    .stages-zone { height: 344px; }
     .center-line { height: 40px; }
-    .stages-track { padding: 15px 0; height: 100%; }
-    .top-circuit { width: 45px; height: 31px; }
+    .stages-track { padding: 10px 0; height: 100%; }
 
-    /* Stage columns & cards */
-    .stage {
-      width: 130px;
-      height: 100%;
-      padding: 8px 1px;
-    }
+    /* Cards */
+    .stage { width: 130px; height: 100%; padding: 8px 1px; }
     .card {
-      width: 65px;
-      height: 84px;
+      width: 65px; height: 84px;
       border-radius: 8px;
       box-shadow: 0 3px 0 0 var(--card-shadow);
       transform: none;
     }
-    .card-emoji {
-      width: 42px;
-      height: 56px;
-    }
-    .mult {
-      width: 64px;
-      height: 24px;
-      font-size: 10px;
-    }
+    .card-emoji { width: 42px; height: 56px; }
+    .mult { width: 64px; height: 24px; font-size: 10px; }
 
-    /* Player zone — fluid */
-    .player-zone {
-      height: clamp(90px, 14vh, 120px);
-      padding-bottom: 8px;
-    }
-    .pad {
-      padding: clamp(10px, 3vw, 16px);
-      gap: clamp(8px, 2.5vw, 14px);
-    }
-    .pick-btn {
-      width: clamp(48px, 14vw, 62px);
-      height: clamp(48px, 14vw, 62px);
-      border-radius: 10px;
-    }
-    .pick-btn .ico {
-      width: clamp(24px, 7vw, 32px);
-      height: clamp(24px, 7vw, 32px);
-    }
+    /* Pick buttons */
+    .player-zone { height: 110px; padding-bottom: 8px; }
+    .pad { padding: 12px; gap: 10px; }
+    .pick-btn { width: 55px; height: 55px; border-radius: 10px; }
+    .pick-btn .ico { width: 28px; height: 28px; }
 
-    /* Side panel — below the board */
-    .side {
-      width: 100%;
-      border-right: none;
-      border-top: 1px solid var(--hairline);
-      padding: 16px 20px 20px;
-      gap: 8px;
-    }
-    .side .place-btn        { order: 1; }
-    .side .cashout-btn      { order: 1; }
-    .side .bet-amount-wrap  { order: 2; }
-    .side .payout           { display: none !important; }
-
-    /* Bottom bar — fixed */
-    .bottom {
-      padding: 1px 20px 0;
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      z-index: 50;
-      background: var(--panel);
-      border-top: 1px solid var(--hairline);
-    }
+    /* Bottom bar compact */
+    .bottom { height: 40px; padding: 0 14px; }
 
     /* Mobile animations (no scale) */
     @keyframes shake {
@@ -1074,69 +1483,142 @@
      SMALL PHONES (≤480px) — extra compact
      =========================================================== */
   @media (max-width: 480px) {
-    .stage { width: 110px; }
-    .card { width: 80px; height: 103px; }
-    .card-emoji { width: 48px; height: 64px; }
-    .mult { width: 72px; height: 24px; font-size: 11px; }
-    .player-zone { height: clamp(80px, 12vh, 100px); }
-    .pick-btn {
-      width: clamp(42px, 12vw, 52px);
-      height: clamp(42px, 12vw, 52px);
-    }
-    .pick-btn .ico {
-      width: clamp(22px, 6vw, 28px);
-      height: clamp(22px, 6vw, 28px);
-    }
+    .stages-zone { height: 344px; }
+    .stage { width: 110px; height: 100%; }
+    .card { width: 56px; height: 72px; }
+    .card-emoji { width: 36px; height: 48px; }
+    .mult { width: 60px; height: 22px; font-size: 9px; }
+    .player-zone { height: 95px; }
+    .pick-btn { width: 46px; height: 46px; }
+    .pick-btn .ico { width: 24px; height: 24px; }
     .pad { padding: 10px; gap: 8px; }
-    .side { padding: 12px 16px 16px; }
+    .side { padding: 10px 14px; }
   }
 </style>
 </head>
 <body>
   <div class="app">
+    <!-- Header — always visible at top -->
+    <div class="header">
+      <div class="header-left">
+        <div class="game-name"><span class="ico">✊</span><span>Rock Paper Scissors</span></div>
+      </div>
+      <div class="header-balance">
+        <span class="header-bal-icon">💰</span>
+        <span class="header-bal-value" id="balance-display">$1,000.00</span>
+      </div>
+      <div class="header-right">
+        <div class="fairplay">Fair Play</div>
+        <div class="info">i</div>
+      </div>
+    </div>
+
+    <!-- Scrollable content -->
     <div class="row">
       <!-- ============= LEFT PANEL ============= -->
       <aside class="side">
-        <div class="bet-amount-wrap">
-          <div class="label">Bet Amount</div>
-          <div class="input-row">
-            <span class="currency">$</span>
-            <input id="bet-input" type="number" min="0.01" step="0.01" value="10.00" placeholder="0.00" />
-            <div class="chips">
-              <button class="chip" id="half-btn">1/2</button>
-              <button class="chip" id="double-btn">2x</button>
+        <div class="mode-toggle">
+          <button class="active" id="mode-manual">Manual</button>
+          <button id="mode-auto">Auto</button>
+        </div>
+
+        <!-- MANUAL PANEL -->
+        <div class="manual-panel">
+          <div class="bet-amount-wrap">
+            <div class="label">Bet Amount</div>
+            <div class="input-row">
+              <span class="currency">$</span>
+              <input id="bet-input" type="number" min="1" max="100" step="0.01" value="10.00" placeholder="1.00" />
+              <div class="chips">
+                <button class="chip" id="half-btn">1/2</button>
+                <button class="chip" id="double-btn">2x</button>
+              </div>
             </div>
           </div>
+
+          <button class="place-btn" id="place-btn">Place Bet</button>
+          <button class="cashout-btn" id="cashout-btn" disabled>Cash Out</button>
         </div>
 
-        <!-- Payout panel — shown only during active play -->
-        <div class="payout" id="payout">
-          <div class="payout-head">
-            <span>Payout</span>
-            <span class="payout-mult" id="payout-mult">1x</span>
+        <!-- AUTO PANEL -->
+        <div class="auto-panel">
+          <div class="bet-amount-wrap">
+            <div class="label">Bet Amount</div>
+            <div class="input-row">
+              <span class="currency">$</span>
+              <input id="auto-bet-input" type="number" min="1" max="100" step="0.01" value="10.00" placeholder="1.00" />
+              <div class="chips">
+                <button class="chip" id="auto-half-btn">1/2</button>
+                <button class="chip" id="auto-double-btn">2x</button>
+              </div>
+            </div>
           </div>
+
+          <div class="auto-section">
+            <div class="auto-section-label">Auto Cash Out At</div>
+            <div class="auto-chips" id="auto-cashout-chips">
+              <button class="auto-chip" data-mult="0">1.93x</button>
+              <button class="auto-chip selected" data-mult="1">3.73x</button>
+              <button class="auto-chip" data-mult="2">7.20x</button>
+              <button class="auto-chip" data-mult="3">13.89x</button>
+              <button class="auto-chip" data-mult="5">51.79x</button>
+              <button class="auto-chip" data-mult="6">100x</button>
+            </div>
+          </div>
+
+          <div class="auto-section">
+            <div class="auto-section-label">Pick Strategy</div>
+            <div class="auto-pick-chips" id="auto-pick-chips">
+              <button class="auto-pick-chip selected" data-pick="random">🎲</button>
+              <button class="auto-pick-chip" data-pick="rock">✊</button>
+              <button class="auto-pick-chip" data-pick="paper">✋</button>
+              <button class="auto-pick-chip" data-pick="scissors">✌️</button>
+            </div>
+          </div>
+
+          <div class="auto-section">
+            <div class="auto-section-label">Number of Games</div>
+            <div class="auto-chips" id="auto-rounds-chips">
+              <button class="auto-chip" data-rounds="5">5</button>
+              <button class="auto-chip selected" data-rounds="10">10</button>
+              <button class="auto-chip" data-rounds="25">25</button>
+              <button class="auto-chip" data-rounds="50">50</button>
+              <button class="auto-chip" data-rounds="0">∞</button>
+            </div>
+          </div>
+
+          <div class="auto-section">
+            <div class="auto-section-label">Stop Conditions</div>
+            <div class="auto-stop-grid">
+              <div class="auto-stop-item">
+                <span>Profit ≥</span>
+                <input class="auto-stop-input" id="auto-stop-win" type="number" min="0" step="1" placeholder="No limit" />
+              </div>
+              <div class="auto-stop-item">
+                <span>Loss ≥</span>
+                <input class="auto-stop-input" id="auto-stop-loss" type="number" min="0" step="1" placeholder="No limit" />
+              </div>
+            </div>
+          </div>
+
+          <div class="auto-progress" id="auto-progress">
+            <div class="auto-stats" id="auto-stats">
+              <span>Round <b id="auto-round-num">0</b>/<b id="auto-round-total">10</b></span>
+              <span>W:<b id="auto-wins">0</b> L:<b id="auto-losses">0</b></span>
+              <span id="auto-profit">$0.00</span>
+            </div>
+            <div class="auto-progress-bar">
+              <div class="auto-progress-fill" id="auto-progress-fill"></div>
+            </div>
+          </div>
+
+          <button class="auto-start-btn" id="auto-start-btn">▶ Start Auto Play</button>
+          <button class="auto-stop-btn" id="auto-stop-btn">■ Stop</button>
         </div>
-
-        <button class="place-btn" id="place-btn">Place Bet</button>
-        <button class="cashout-btn" id="cashout-btn" disabled>Cash Out — $0.00</button>
-
       </aside>
 
       <!-- ============= MAIN ============= -->
       <main class="main">
-        <!-- Header -->
-        <div class="header">
-          <div class="header-title">
-            <div class="info">i</div>
-            <div class="game-name"><span class="ico">✊</span><span>Rock Paper Scissors</span></div>
-          </div>
-          <div class="header-balance">
-            <span class="header-bal-label">Balance</span>
-            <span class="header-bal-value" id="balance-display">$1,000.00</span>
-          </div>
-          <div class="fairplay">Fair Play</div>
-        </div>
-
         <!-- Board -->
         <div class="board" id="board">
 
@@ -1174,80 +1656,149 @@
             <button class="modal-close" id="modal-close">&times;</button>
             <h2>Game Info</h2>
             <div class="modal-payout-box">
-              <span class="label">Max Payout</span>
-              <span class="value">$500,000.00</span>
+              <span class="label">Max Win</span>
+              <span class="value">$10,000.00</span>
             </div>
+            <div class="modal-payout-box">
+              <span class="label">Bet Range</span>
+              <span class="value">$1.00 — $100.00</span>
+            </div>
+
+            <div class="info-box">
+              <span class="info-icon">🎮</span>
+              <p>Rock Paper Scissors is a multiplier climbing game. Compete against the house in classic RPS rounds — each win increases your payout. Cash out anytime or risk it all.</p>
+            </div>
+
+            <h3>How to Play</h3>
+            <ul>
+              <li><strong>Place a bet</strong> — enter your amount and click Place Bet.</li>
+              <li><strong>Pick your hand</strong> — choose Rock ✊, Paper ✋, or Scissors ✌️.</li>
+              <li><strong>Win</strong> — multiplier increases. Cash out or keep going.</li>
+              <li><strong>Tie</strong> — moves to next card, same multiplier. Ties are free.</li>
+              <li><strong>Lose</strong> — you lose your bet. Game over.</li>
+              <li><strong>Cash out</strong> — collect winnings anytime after first win.</li>
+              <li><strong>Cancel</strong> — before first pick, cancel to get your bet back.</li>
+            </ul>
 
             <h3>Rules</h3>
-            <p>Rock Paper Scissors is a simple and exciting game where players choose rock, paper, or scissors in competition against the house to come out on top and increase their multiplier streak.</p>
             <ul>
-              <li>Rock beats scissors, scissors beats paper, and paper beats rock.</li>
-              <li>Each win increases the player's multiplier, building up to a maximum of 10,000x.</li>
-              <li>In manual mode, ties move the game forward to the next stage without affecting the multiplier.</li>
-              <li>In auto mode, ties pay 0.98x.</li>
-              <li>To cash out in manual mode, the player must win at least one round.</li>
-              <li>There are 10 stages in total. Clearing all stages awards the final multiplier.</li>
-              <li>Players can cash out at any point after winning at least one round.</li>
+              <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
+              <li>Each win compounds the multiplier up to 100x.</li>
+              <li>Ties don't count — extra cards are added dynamically.</li>
+              <li>7 wins = Maxed Out (100x). Must win 1 round to cash out.</li>
             </ul>
 
-            <h3>Fair Play</h3>
-            <p>This game uses a provably fair system to guarantee that neither the player nor the house can manipulate the outcome of any round.</p>
-            <ul>
-              <li><strong>Server Seed:</strong> A cryptographic seed is generated server-side before each game begins. A SHA-256 hash of this seed is shown to the player before play starts.</li>
-              <li><strong>Client Seed:</strong> The player provides their own seed (or one is generated automatically), which is combined with the server seed to determine outcomes.</li>
-              <li><strong>Verification:</strong> After each game, the unhashed server seed is revealed so players can independently verify that the outcomes were not altered.</li>
-              <li><strong>House Edge:</strong> 2% per round. The base win multiplier is 1.96x (2x &times; 0.98), compounding each stage.</li>
-              <li><strong>RNG:</strong> Each round's house choice is derived from HMAC-SHA256(serverSeed, clientSeed + nonce + round), ensuring true randomness that neither party can predict.</li>
-            </ul>
+            <h3>Multiplier Table</h3>
+            <table class="mult-table">
+              <tr><th>Win</th><th>Multiplier</th><th>$100 bet</th></tr>
+              <tr><td>Win 1</td><td>1.93x</td><td>$193</td></tr>
+              <tr><td>Win 2</td><td>3.73x</td><td>$373</td></tr>
+              <tr><td>Win 3</td><td>7.20x</td><td>$720</td></tr>
+              <tr><td>Win 4</td><td>13.89x</td><td>$1,389</td></tr>
+              <tr><td>Win 5</td><td>26.83x</td><td>$2,683</td></tr>
+              <tr><td>Win 6</td><td>51.79x</td><td>$5,179</td></tr>
+              <tr><td>Win 7</td><td>100.00x ⭐</td><td>$10,000</td></tr>
+            </table>
 
-            <h3>Payouts</h3>
+            <h3>House Edge &amp; RTP</h3>
+            <div class="info-box">
+              <span class="info-icon">📊</span>
+              <p><strong>RTP: 96.5%</strong> — House edge is 3.5% per round. Base multiplier is 1.93x. 7 wins reaches 100x. Max bet $100, max win $10,000.</p>
+            </div>
+
+            <h3>Tips</h3>
             <ul>
-              <li>Stage 1: 1.96x</li>
-              <li>Stage 2: 3.84x</li>
-              <li>Stage 3: 7.53x</li>
-              <li>Stage 5: 28.95x</li>
-              <li>Stage 7: 111.20x</li>
-              <li>Stage 10: 1,628.15x</li>
-              <li>Maximum payout capped at $500,000.00 per game.</li>
+              <li>Every outcome is provably fair — click Fair Play to verify.</li>
+              <li>Each round is independent — previous results don't affect future ones.</li>
+              <li>Higher multipliers = higher risk. Cash out when comfortable.</li>
+              <li>Ties are free — more gameplay at no cost.</li>
             </ul>
           </div>
         </div>
 
-        <!-- Bottom bar -->
-        <div class="bottom">
-          <div class="bottom-icons">
-            <div class="ic sound-toggle" id="sound-toggle" title="Toggle Sound">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                <path class="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
-              </svg>
+        <!-- Provably Fair Modal -->
+        <div class="modal-overlay" id="pf-modal">
+          <div class="modal">
+            <button class="modal-close" id="pf-close">&times;</button>
+            <h2>Provably Fair</h2>
+            <p class="pf-desc">This game uses <strong>Provably Fair</strong> technology to determine the game result. This tool gives you the ability to change your seed and check fairness of the game.</p>
+
+            <div class="pf-section">
+              <div class="pf-label"><span class="pf-icon">🖥</span> Next client seed:</div>
+              <div class="pf-sublabel">Generated on your side</div>
+              <div class="pf-toggle-row">
+                <button class="pf-toggle-btn active" id="pf-random-mode">Random every game</button>
+                <button class="pf-toggle-btn" id="pf-nonce-mode">Add nonce</button>
+              </div>
+              <div class="pf-input-row">
+                <input type="text" id="pf-client-seed" value="" readonly />
+                <button class="pf-btn-sm" id="pf-copy-client" title="Copy">CP</button>
+                <button class="pf-btn-sm" id="pf-regen-client" title="Regenerate">R</button>
+              </div>
+              <button class="pf-save-btn" id="pf-save-seed">Save Seed</button>
             </div>
-            <div class="ic" title="Settings">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
+
+            <div class="pf-section">
+              <div class="pf-label"><span class="pf-icon">🖥</span> Next server seed SHA256:</div>
+              <div class="pf-sublabel">Encrypted seed, generated on our side</div>
+              <div class="pf-hash-box" id="pf-server-hash">loading...</div>
+              <div class="pf-cp-row">
+                <button class="pf-btn-sm" id="pf-copy-hash" title="Copy">CP</button>
+                <button class="pf-btn-sm" id="pf-reveal-seed" title="Reveal (after game)">R</button>
+              </div>
+              <p class="pf-note">This hash is committed <strong>before</strong> you bet. After the roll, the server seed is revealed and you can verify SHA256(seed) matches this hash.</p>
             </div>
-            <div class="ic" title="Keyboard">
-              <svg width="17" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="6" width="20" height="12" rx="2"/>
-                <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/>
-              </svg>
-            </div>
-            <div class="ic" title="Fullscreen">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/>
-              </svg>
-            </div>
-            <div class="ic" title="Favorite">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
+
+            <div class="pf-how">
+              <div class="pf-how-title">How it works</div>
+              <ol>
+                <li>Server generates a seed and shows you its SHA256 hash</li>
+                <li>You set your client seed (your influence on randomness)</li>
+                <li>You place a bet</li>
+                <li>Roll = HMAC-SHA256(server_seed, your_seed:0)</li>
+                <li>Server reveals the seed — verify SHA256 matches</li>
+                <li>New seed pre-generated for next bet</li>
+              </ol>
             </div>
           </div>
-          <div class="bottom-logo">MYBC</div>
         </div>
+
       </main>
+    </div>
+
+    <!-- Bottom bar — always visible at bottom -->
+    <div class="bottom">
+      <div class="bottom-icons">
+        <div class="ic sound-toggle" id="sound-toggle" title="Toggle Sound">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path class="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+        </div>
+        <div class="ic" title="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
+        <div class="ic" title="Keyboard">
+          <svg width="17" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="6" width="20" height="12" rx="2"/>
+            <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h12"/>
+          </svg>
+        </div>
+        <div class="ic" title="Fullscreen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/>
+          </svg>
+        </div>
+        <div class="ic" title="Favorite">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+      </div>
+      <div class="bottom-logo">MYBC</div>
     </div>
   </div>
 
@@ -1256,9 +1807,11 @@
   /* =============================================================
      GAME LOGIC
      ============================================================= */
-  const NUM_STAGES = 10;
-  const HOUSE_EDGE = 0.98;
-  const BASE_MULT = 2 * HOUSE_EDGE; // 1.96
+  const NUM_STAGES = 7;
+  const MAX_BET = 100;
+  const MIN_BET = 1;
+  const MAX_WIN = 10000;
+  const BASE_MULT = +(Math.pow(100, 1/7)).toFixed(4); // ~1.9307 → 100x at win 7
   const CHOICES = ['rock','paper','scissors'];
   const EMOJI   = { rock: '✊', paper: '✋', scissors: '✌️' };
   const HAND_IMG = { "rock":     "data:image/png;base64,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", "paper":    "data:image/png;base64,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", "scissors": "data:image/png;base64,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" };
@@ -1270,6 +1823,8 @@
   let currentStage = -1; // -1 = not playing, otherwise index of stage to play
   let inFlight = false;
   let wins = 0, losses = 0, bestMult = 0;
+  let winCount = 0; // tracks actual wins to determine multiplier level
+  let autoRunning = false; // declared early so onPick can check it
 
   /* =============================================================
      DOM
@@ -1316,22 +1871,43 @@
   function fmt(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function updateBalance() { balanceEl.textContent = fmt(balance); }
   function getStage(i) { return trackEl.children[i]; }
+  function getTotalStages() { return trackEl.children.length; }
+
+  // Dynamically add a new stage card to the track
+  function addStage(multValue) {
+    const idx = getTotalStages();
+    const stage = document.createElement('div');
+    stage.className = 'stage';
+    stage.dataset.index = idx;
+    stage.innerHTML = `
+      <div class="card top back" data-role="top"></div>
+      <div class="mult" data-role="mult">${multValue.toFixed(2)}x</div>
+      <div class="card player back" data-role="bottom"></div>
+    `;
+    trackEl.appendChild(stage);
+    return idx;
+  }
 
   function currentPayout() {
-    if (currentStage <= 0) return 0;
-    return bet * stageMults[currentStage - 1];
+    if (winCount <= 0) return 0;
+    return Math.min(bet * stageMults[winCount - 1], MAX_WIN);
   }
-  function nextPayout() {
-    if (currentStage < 0 || currentStage >= NUM_STAGES) return 0;
-    return bet * stageMults[currentStage];
-  }
+  function currentMultIndex() { return Math.max(0, winCount - 1); }
+  function nextMultIndex() { return winCount; }
   function setStatus(msg) { statusEl.textContent = msg; }
   function setHint(msg)   { if (hintEl) hintEl.textContent = msg; }
 
   function updateCashout() {
-    if (currentStage > 0 && currentStage <= NUM_STAGES) {
+    cashoutBtn.classList.remove('cashout-ready');
+    if (winCount > 0 && currentStage > 0) {
+      // Has wins — green cashout button
       cashoutBtn.disabled = false;
-      cashoutBtn.textContent = `Cash Out ${stageMults[currentStage - 1].toFixed(2)}x — ${fmt(currentPayout())}`;
+      cashoutBtn.classList.add('cashout-ready');
+      cashoutBtn.textContent = `Cash Out ${stageMults[currentMultIndex()].toFixed(2)}x — ${fmt(currentPayout())}`;
+    } else if (currentStage === 0) {
+      // Bet placed but no picks yet — allow cancel
+      cashoutBtn.disabled = false;
+      cashoutBtn.textContent = `Cancel Bet — Return ${fmt(bet)}`;
     } else {
       cashoutBtn.disabled = true;
       cashoutBtn.textContent = 'Cash Out';
@@ -1342,12 +1918,11 @@
 
   function updatePayoutPanel() {
     if (currentStage <= 0) {
-      // Bet placed but no stage cleared yet (or game not active)
-      payoutMult.textContent = '1x';
+      if (payoutMult) payoutMult.textContent = '1x';
       if (payoutAmt) payoutAmt.textContent = currentStage === 0 ? fmt(bet) : fmt(0);
     } else {
-      const m = stageMults[currentStage - 1];
-      payoutMult.textContent = m.toFixed(2) + 'x';
+      const m = stageMults[currentMultIndex()];
+      if (payoutMult) payoutMult.textContent = m.toFixed(2) + 'x';
       if (payoutAmt) payoutAmt.textContent = fmt(currentPayout());
     }
   }
@@ -1388,26 +1963,20 @@
      ============================================================= */
   function startGame() {
     const amt = parseFloat(betInput.value);
-    if (!isFinite(amt) || amt <= 0) { flashInput(); return; }
+    if (!isFinite(amt) || amt < MIN_BET) { flashInput(); return; }
+    if (amt > MAX_BET) { setHint(`Max bet is ${fmt(MAX_BET)}`); flashInput(); return; }
     if (amt > balance) { setHint('Bet exceeds balance.'); flashInput(); return; }
     bet = amt;
     balance -= bet;
     updateBalance();
     if (typeof sndBet === 'function') sndBet();
 
-    // reset visuals
-    document.querySelectorAll('.stage').forEach((s) => {
-      s.classList.remove('active');
-      hideCard(s.querySelector('[data-role="top"]'));
-      hideCard(s.querySelector('[data-role="bottom"]'));
-      const top = s.querySelector('[data-role="top"]');
-      const bot = s.querySelector('[data-role="bottom"]');
-      top.dataset.role = 'top';
-      bot.dataset.role = 'bottom';
-      const m = s.querySelector('[data-role="mult"]');
-      m.className = 'mult';
-      m.dataset.role = 'mult';
-    });
+    // rebuild stages cleanly (removes any dynamic stages from ties)
+    buildStages();
+
+    // Provably fair: regenerate client seed if random mode
+    if (pfRandomEveryGame) newClientSeed();
+    nonce = 0;
 
     currentStage = 0;
     appEl.classList.add('playing');
@@ -1428,8 +1997,8 @@
     scrollToStage(i);
   }
 
-  function onPick(choice) {
-    if (inFlight || currentStage < 0 || currentStage >= NUM_STAGES) return;
+  async function onPick(choice) {
+    if (inFlight || currentStage < 0 || winCount >= NUM_STAGES || autoRunning) return;
     if (typeof sndClick === 'function') sndClick();
     inFlight = true;
     pickBtns.forEach(b => b.disabled = true);
@@ -1438,8 +2007,8 @@
     const topCard = stage.querySelector('[data-role="top"]');
     const botCard = stage.querySelector('[data-role="bottom"]');
 
-    // CPU picks first (revealed on top)
-    const cpuChoice = CHOICES[Math.floor(Math.random() * 3)];
+    // CPU choice via Provably Fair HMAC-SHA256
+    const cpuChoice = await getProvablyFairChoice();
     setStatus('Revealing...');
 
     setTimeout(() => {
@@ -1469,35 +2038,26 @@
       currentStage = idx + 1;
       // don't update cashout — multiplier stays the same
 
-      if (currentStage >= NUM_STAGES) {
-        setTimeout(() => {
-          if (currentStage <= 1) {
-            // never won, just end
-            endGame();
-            setStatus('No wins — place a new bet');
-            inFlight = false;
-          } else {
-            const payout = currentPayout();
-            balance += payout;
-            updateBalance();
-            wins++;
-            if (typeof sndCashout === 'function') sndCashout();
-            showBanner('win', 'All stages cleared!', `+${fmt(payout)}`);
-            endGame();
-            inFlight = false;
-          }
-        }, 700);
-      } else {
-        // Copy the tied stage's multiplier label to the next stage
-        const nextMult = getStage(currentStage).querySelector('[data-role="mult"]');
-        nextMult.textContent = stageMults[idx].toFixed(2) + 'x';
-        setTimeout(() => {
-          activateStage(currentStage);
-          pickBtns.forEach(b => b.disabled = false);
-          setStatus(`Stage ${currentStage + 1} — pick your hand`);
-          inFlight = false;
-        }, 700);
+      // If we ran out of card slots, add a new one dynamically
+      if (currentStage >= getTotalStages()) {
+        const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
+        addStage(multVal);
       }
+
+      // Update ALL remaining stage labels
+      for (let s = currentStage; s < getTotalStages(); s++) {
+        const effIdx = winCount + (s - currentStage);
+        const label = getStage(s).querySelector('[data-role="mult"]');
+        if (effIdx < stageMults.length) {
+          label.textContent = stageMults[effIdx].toFixed(2) + 'x';
+        }
+      }
+      setTimeout(() => {
+        activateStage(currentStage);
+        pickBtns.forEach(b => b.disabled = false);
+        setStatus(`Stage ${currentStage + 1} — pick your hand`);
+        inFlight = false;
+      }, 700);
       return;
     }
 
@@ -1508,13 +2068,15 @@
       setMultState(idx, 'green');
       if (typeof sndWin === 'function') sndWin();
 
+      winCount++;
       currentStage = idx + 1;
-      bestMult = Math.max(bestMult, stageMults[idx]);
+      bestMult = Math.max(bestMult, stageMults[currentMultIndex()]);
       updateCashout();
 
-      if (currentStage >= NUM_STAGES) {
+      if (winCount >= NUM_STAGES) {
+        // True max out — won all 10 rounds
         setTimeout(() => {
-          const payout = bet * stageMults[NUM_STAGES - 1];
+          const payout = currentPayout();
           balance += payout;
           updateBalance();
           wins++;
@@ -1524,11 +2086,25 @@
           inFlight = false;
         }, 700);
       } else {
+        // If we ran out of card slots, add a new one dynamically
+        if (currentStage >= getTotalStages()) {
+          const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
+          addStage(multVal);
+        }
+        const nextMultVal = stageMults[nextMultIndex()];
+        // Update ALL remaining stage labels
+        for (let s = currentStage; s < getTotalStages(); s++) {
+          const effIdx = winCount + (s - currentStage);
+          const label = getStage(s).querySelector('[data-role="mult"]');
+          if (effIdx < stageMults.length) {
+            label.textContent = stageMults[effIdx].toFixed(2) + 'x';
+          }
+        }
         setTimeout(() => {
           activateStage(currentStage);
           pickBtns.forEach(b => b.disabled = false);
-          setStatus(`Stage ${currentStage + 1} — risk ${fmt(currentPayout())} for ${stageMults[currentStage].toFixed(2)}x`);
-          setHint(`Won! Cash out for ${fmt(currentPayout())} or push for ${stageMults[currentStage].toFixed(2)}x.`);
+          setStatus(`Stage ${currentStage + 1} — risk ${fmt(currentPayout())} for ${nextMultVal.toFixed(2)}x`);
+          setHint(`Won! Cash out for ${fmt(currentPayout())} or push for ${nextMultVal.toFixed(2)}x.`);
           inFlight = false;
         }, 700);
       }
@@ -1550,18 +2126,37 @@
   }
 
   function cashOut() {
-    if (currentStage <= 0 || inFlight) return;
+    if (inFlight) return;
+
+    // Cancel bet — no picks made yet, return full bet
+    if (currentStage === 0 && winCount === 0) {
+      balance += bet;
+      updateBalance();
+      if (typeof sndClick === 'function') sndClick();
+      endGame();
+      setStatus('Bet cancelled');
+      return;
+    }
+
+    // Normal cashout — must have at least 1 win
+    if (winCount <= 0) return;
     const payout = currentPayout();
     balance += payout;
     updateBalance();
     wins++;
     if (typeof sndCashout === 'function') sndCashout();
-    showBanner('win', `Cashed Out at ${stageMults[currentStage - 1].toFixed(2)}x`, `+${fmt(payout)}`);
+    showBanner('win', `Cashed Out at ${stageMults[currentMultIndex()].toFixed(2)}x`, `+${fmt(payout)}`);
     endGame();
   }
 
   function endGame() {
     currentStage = -1;
+    winCount = 0;
+    // Provably fair: rotate server seed (old one can now be revealed)
+    newServerSeed();
+    // Reset board to starting position
+    buildStages();
+    stripEl.scrollTo({ left: 0, behavior: 'smooth' });
     appEl.classList.remove('playing');
     placeBtn.disabled = false;
     betInput.disabled = false;
@@ -1604,7 +2199,7 @@
   });
   doubleBtn.addEventListener('click', () => {
     const v = parseFloat(betInput.value) || 0;
-    betInput.value = Math.min(balance, v * 2).toFixed(2);
+    betInput.value = Math.min(balance, MAX_BET, v * 2).toFixed(2);
   });
 
   pickBtns.forEach(b => {
@@ -1613,6 +2208,7 @@
 
   // Keyboard: 1/2/3 = R/P/S, C = cashout, Enter = bet
   document.addEventListener('keydown', (e) => {
+    if (autoRunning) return; // block during auto play
     if (currentStage < 0 || inFlight) {
       if (e.key === 'Enter' && !placeBtn.disabled) { hideBanner(); startGame(); }
       return;
@@ -1628,20 +2224,150 @@
      ============================================================= */
   const gameInfoModal = document.getElementById('game-info-modal');
   const modalCloseBtn = document.getElementById('modal-close');
-  const infoBtn = document.querySelector('.header-title .info');
+  const infoBtn = document.querySelector('.header-right .info');
   const fairplayBtn = document.querySelector('.fairplay');
 
   function openModal() { gameInfoModal.classList.add('show'); }
   function closeModal() { gameInfoModal.classList.remove('show'); }
 
   infoBtn.addEventListener('click', openModal);
-  fairplayBtn.addEventListener('click', openModal);
   modalCloseBtn.addEventListener('click', closeModal);
   gameInfoModal.addEventListener('click', (e) => {
     if (e.target === gameInfoModal) closeModal();
   });
+
+  /* =============================================================
+     PROVABLY FAIR SYSTEM
+     ============================================================= */
+  const pfModal = document.getElementById('pf-modal');
+  const pfCloseBtn = document.getElementById('pf-close');
+  const pfClientSeedInput = document.getElementById('pf-client-seed');
+  const pfServerHashEl = document.getElementById('pf-server-hash');
+  const pfCopyClient = document.getElementById('pf-copy-client');
+  const pfRegenClient = document.getElementById('pf-regen-client');
+  const pfSaveBtn = document.getElementById('pf-save-seed');
+  const pfCopyHash = document.getElementById('pf-copy-hash');
+  const pfRevealSeed = document.getElementById('pf-reveal-seed');
+  const pfRandomMode = document.getElementById('pf-random-mode');
+  const pfNonceMode = document.getElementById('pf-nonce-mode');
+
+  let pfRandomEveryGame = true;
+  let clientSeed = '';
+  let serverSeed = '';
+  let serverSeedHash = '';
+  let prevServerSeed = '';
+  let nonce = 0;
+
+  // Generate random hex string
+  function randomHex(len) {
+    const arr = new Uint8Array(len);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // SHA-256 hash
+  async function sha256(str) {
+    const buf = new TextEncoder().encode(str);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // HMAC-SHA256
+  async function hmacSha256(key, message) {
+    const keyBuf = new TextEncoder().encode(key);
+    const msgBuf = new TextEncoder().encode(message);
+    const cryptoKey = await crypto.subtle.importKey('raw', keyBuf, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', cryptoKey, msgBuf);
+    return Array.from(new Uint8Array(sig), b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Generate new server seed + hash
+  async function newServerSeed() {
+    prevServerSeed = serverSeed;
+    serverSeed = randomHex(32);
+    serverSeedHash = await sha256(serverSeed);
+    pfServerHashEl.textContent = serverSeedHash;
+    nonce = 0;
+  }
+
+  // Generate new client seed
+  function newClientSeed() {
+    clientSeed = 'demo_' + randomHex(8);
+    pfClientSeedInput.value = clientSeed;
+  }
+
+  // Get house choice using provably fair RNG
+  async function getProvablyFairChoice() {
+    const msg = clientSeed + ':' + nonce;
+    const hmac = await hmacSha256(serverSeed, msg);
+    const num = parseInt(hmac.substring(0, 8), 16);
+    nonce++;
+    return CHOICES[num % 3];
+  }
+
+  // Initialize seeds
+  newClientSeed();
+  newServerSeed();
+
+  // Open/close PF modal
+  function openPfModal() { pfModal.classList.add('show'); }
+  function closePfModal() { pfModal.classList.remove('show'); }
+
+  fairplayBtn.addEventListener('click', openPfModal);
+  pfCloseBtn.addEventListener('click', closePfModal);
+  pfModal.addEventListener('click', (e) => {
+    if (e.target === pfModal) closePfModal();
+  });
+
+  // Copy buttons
+  pfCopyClient.addEventListener('click', () => {
+    navigator.clipboard.writeText(pfClientSeedInput.value);
+    pfCopyClient.textContent = '✓';
+    setTimeout(() => pfCopyClient.textContent = 'CP', 1000);
+  });
+  pfCopyHash.addEventListener('click', () => {
+    navigator.clipboard.writeText(serverSeedHash);
+    pfCopyHash.textContent = '✓';
+    setTimeout(() => pfCopyHash.textContent = 'CP', 1000);
+  });
+
+  // Regenerate client seed
+  pfRegenClient.addEventListener('click', () => {
+    newClientSeed();
+  });
+
+  // Save seed
+  pfSaveBtn.addEventListener('click', () => {
+    clientSeed = pfClientSeedInput.value;
+    pfSaveBtn.textContent = 'Saved!';
+    setTimeout(() => pfSaveBtn.textContent = 'Save Seed', 1000);
+  });
+
+  // Reveal previous server seed
+  pfRevealSeed.addEventListener('click', () => {
+    if (prevServerSeed) {
+      pfServerHashEl.textContent = 'Seed: ' + prevServerSeed;
+      setTimeout(() => pfServerHashEl.textContent = serverSeedHash, 5000);
+    }
+  });
+
+  // Toggle random/nonce mode
+  pfRandomMode.addEventListener('click', () => {
+    pfRandomEveryGame = true;
+    pfRandomMode.classList.add('active');
+    pfNonceMode.classList.remove('active');
+    pfClientSeedInput.readOnly = true;
+  });
+  pfNonceMode.addEventListener('click', () => {
+    pfRandomEveryGame = false;
+    pfNonceMode.classList.add('active');
+    pfRandomMode.classList.remove('active');
+    pfClientSeedInput.readOnly = false;
+  });
+
+  // Escape closes any open modal
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') { closeModal(); closePfModal(); }
   });
 
   /* =============================================================
@@ -1800,6 +2526,325 @@
     if (waves) waves.style.display = soundEnabled ? '' : 'none';
     if (soundEnabled) sndClick();
   });
+
+  /* =============================================================
+     MODE TOGGLE (Manual / Auto)
+     ============================================================= */
+  const modeManualBtn = document.getElementById('mode-manual');
+  const modeAutoBtn = document.getElementById('mode-auto');
+
+  modeManualBtn.addEventListener('click', () => {
+    if (appEl.classList.contains('auto-running')) return;
+    appEl.classList.remove('auto-mode');
+    modeManualBtn.classList.add('active');
+    modeAutoBtn.classList.remove('active');
+  });
+  modeAutoBtn.addEventListener('click', () => {
+    if (currentStage >= 0) return; // don't switch during manual game
+    appEl.classList.add('auto-mode');
+    modeAutoBtn.classList.add('active');
+    modeManualBtn.classList.remove('active');
+  });
+
+  /* =============================================================
+     AUTO PLAY ENGINE
+     ============================================================= */
+  const autoBetInput = document.getElementById('auto-bet-input');
+  const autoHalfBtn = document.getElementById('auto-half-btn');
+  const autoDoubleBtn = document.getElementById('auto-double-btn');
+  const autoCashoutChips = document.getElementById('auto-cashout-chips');
+  const autoPickChips = document.getElementById('auto-pick-chips');
+  const autoRoundsChips = document.getElementById('auto-rounds-chips');
+  const autoStopWinInput = document.getElementById('auto-stop-win');
+  const autoStopLossInput = document.getElementById('auto-stop-loss');
+  const autoStartBtn = document.getElementById('auto-start-btn');
+  const autoStopBtn = document.getElementById('auto-stop-btn');
+  const autoProgressEl = document.getElementById('auto-progress');
+  const autoProgressFill = document.getElementById('auto-progress-fill');
+  const autoRoundNum = document.getElementById('auto-round-num');
+  const autoRoundTotal = document.getElementById('auto-round-total');
+  const autoWinsEl = document.getElementById('auto-wins');
+  const autoLossesEl = document.getElementById('auto-losses');
+  const autoProfitEl = document.getElementById('auto-profit');
+
+  // autoRunning declared at top with game state
+  let autoStopping = false;
+  let autoCashoutTarget = 1; // index into stageMults (win count to cashout at)
+  let autoPickStrategy = 'random';
+  let autoTotalRounds = 10;
+  let autoCurrentRound = 0;
+  let autoWinCount = 0;
+  let autoLossCount = 0;
+  let autoProfit = 0;
+  let autoStartBalance = 0;
+
+  // Chip selection helpers
+  function selectChip(container, btn) {
+    container.querySelectorAll('.auto-chip, .auto-pick-chip').forEach(c => c.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  // Cashout target chips
+  autoCashoutChips.addEventListener('click', (e) => {
+    const btn = e.target.closest('.auto-chip');
+    if (!btn || autoRunning) return;
+    selectChip(autoCashoutChips, btn);
+    autoCashoutTarget = parseInt(btn.dataset.mult) + 1; // winCount needed
+  });
+
+  // Pick strategy chips
+  autoPickChips.addEventListener('click', (e) => {
+    const btn = e.target.closest('.auto-pick-chip');
+    if (!btn || autoRunning) return;
+    selectChip(autoPickChips, btn);
+    autoPickStrategy = btn.dataset.pick;
+  });
+
+  // Rounds chips
+  autoRoundsChips.addEventListener('click', (e) => {
+    const btn = e.target.closest('.auto-chip');
+    if (!btn || autoRunning) return;
+    selectChip(autoRoundsChips, btn);
+    autoTotalRounds = parseInt(btn.dataset.rounds); // 0 = infinite
+  });
+
+  // Auto bet half/double
+  autoHalfBtn.addEventListener('click', () => {
+    const v = parseFloat(autoBetInput.value) || 0;
+    autoBetInput.value = Math.max(MIN_BET, v / 2).toFixed(2);
+  });
+  autoDoubleBtn.addEventListener('click', () => {
+    const v = parseFloat(autoBetInput.value) || 0;
+    autoBetInput.value = Math.min(balance, MAX_BET, v * 2).toFixed(2);
+  });
+
+  // Update auto stats display
+  function updateAutoStats() {
+    autoRoundNum.textContent = autoCurrentRound;
+    autoRoundTotal.textContent = autoTotalRounds || '∞';
+    autoWinsEl.textContent = autoWinCount;
+    autoLossesEl.textContent = autoLossCount;
+    const profitVal = balance - autoStartBalance;
+    autoProfitEl.textContent = (profitVal >= 0 ? '+' : '') + fmt(profitVal);
+    autoProfitEl.className = profitVal >= 0 ? 'profit-pos' : 'profit-neg';
+    if (autoTotalRounds > 0) {
+      autoProgressFill.style.width = (autoCurrentRound / autoTotalRounds * 100) + '%';
+    } else {
+      autoProgressFill.style.width = '100%';
+    }
+  }
+
+  // Check stop conditions
+  function shouldAutoStop() {
+    if (autoStopping) return true;
+    if (autoTotalRounds > 0 && autoCurrentRound >= autoTotalRounds) return true;
+    const profitVal = balance - autoStartBalance;
+    const stopWin = parseFloat(autoStopWinInput.value);
+    if (stopWin > 0 && profitVal >= stopWin) return true;
+    const stopLoss = parseFloat(autoStopLossInput.value);
+    if (stopLoss > 0 && profitVal <= -stopLoss) return true;
+    if (balance < parseFloat(autoBetInput.value)) return true;
+    return false;
+  }
+
+  // Get auto pick choice
+  function getAutoPick() {
+    if (autoPickStrategy === 'random') {
+      return CHOICES[Math.floor(Math.random() * 3)];
+    }
+    return autoPickStrategy;
+  }
+
+  // Auto play one complete game
+  async function autoPlayGame() {
+    if (shouldAutoStop()) { stopAuto(); return; }
+
+    const betAmt = parseFloat(autoBetInput.value);
+    if (betAmt < MIN_BET || betAmt > MAX_BET || betAmt > balance) { stopAuto(); return; }
+
+    // Place bet
+    bet = betAmt;
+    balance -= bet;
+    updateBalance();
+    buildStages();
+    if (pfRandomEveryGame) newClientSeed();
+    nonce = 0;
+    currentStage = 0;
+    winCount = 0;
+    appEl.classList.add('playing');
+    activateStage(0);
+    updateCashout();
+
+    // Play rounds until game ends
+    await autoPlayRounds();
+  }
+
+  async function autoPlayRounds() {
+    while (true) {
+      if (autoStopping) {
+        // Force cashout if possible, otherwise lose
+        if (winCount > 0) {
+          const payout = currentPayout();
+          balance += payout;
+          updateBalance();
+          autoWinCount++;
+        }
+        endGame();
+        autoCurrentRound++;
+        updateAutoStats();
+        return;
+      }
+
+      if (winCount >= NUM_STAGES) {
+        // Maxed out
+        const payout = currentPayout();
+        balance += payout;
+        updateBalance();
+        autoWinCount++;
+        if (typeof sndMaxWin === 'function') sndMaxWin();
+        endGame();
+        autoCurrentRound++;
+        updateAutoStats();
+        return;
+      }
+
+      // Pick and reveal
+      const choice = getAutoPick();
+      const cpuChoice = await getProvablyFairChoice();
+
+      const stage = getStage(currentStage);
+      const topCard = stage.querySelector('[data-role="top"]');
+      const botCard = stage.querySelector('[data-role="bottom"]');
+
+      revealCard(topCard, cpuChoice, null, true);
+      revealCard(botCard, choice);
+
+      await new Promise(r => setTimeout(r, 500));
+
+      let outcome;
+      if (cpuChoice === choice) outcome = 'tie';
+      else if (BEATS[choice] === cpuChoice) outcome = 'win';
+      else outcome = 'lose';
+
+      if (outcome === 'tie') {
+        setMultState(currentStage, null);
+        stage.classList.remove('active');
+        currentStage++;
+        if (currentStage >= getTotalStages()) {
+          const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
+          addStage(multVal);
+        }
+        // Update remaining labels
+        for (let s = currentStage; s < getTotalStages(); s++) {
+          const effIdx = winCount + (s - currentStage);
+          const label = getStage(s).querySelector('[data-role="mult"]');
+          if (effIdx < stageMults.length) label.textContent = stageMults[effIdx].toFixed(2) + 'x';
+        }
+        activateStage(currentStage);
+        await new Promise(r => setTimeout(r, 300));
+        continue;
+      }
+
+      if (outcome === 'win') {
+        topCard.classList.add('win-glow');
+        botCard.classList.add('win-glow');
+        stage.classList.remove('active');
+        setMultState(currentStage, 'green');
+        if (typeof sndWin === 'function') sndWin();
+        winCount++;
+        currentStage++;
+        updateCashout();
+
+        // Check if reached cashout target
+        if (winCount >= autoCashoutTarget || winCount >= NUM_STAGES) {
+          const payout = currentPayout();
+          balance += payout;
+          updateBalance();
+          autoWinCount++;
+          if (winCount >= NUM_STAGES && typeof sndMaxWin === 'function') sndMaxWin();
+          else if (typeof sndCashout === 'function') sndCashout();
+          await new Promise(r => setTimeout(r, 400));
+          endGame();
+          autoCurrentRound++;
+          updateAutoStats();
+          return;
+        }
+
+        // Continue playing — set up next stage
+        if (currentStage >= getTotalStages()) {
+          const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
+          addStage(multVal);
+        }
+        for (let s = currentStage; s < getTotalStages(); s++) {
+          const effIdx = winCount + (s - currentStage);
+          const label = getStage(s).querySelector('[data-role="mult"]');
+          if (effIdx < stageMults.length) label.textContent = stageMults[effIdx].toFixed(2) + 'x';
+        }
+        activateStage(currentStage);
+        await new Promise(r => setTimeout(r, 400));
+        continue;
+      }
+
+      // Lose
+      topCard.classList.add('win-glow');
+      botCard.classList.add('lose-glow');
+      stage.classList.remove('active');
+      setMultState(currentStage, 'red');
+      if (typeof sndLose === 'function') sndLose();
+      autoLossCount++;
+      await new Promise(r => setTimeout(r, 500));
+      endGame();
+      autoCurrentRound++;
+      updateAutoStats();
+      return;
+    }
+  }
+
+  // Auto play loop
+  async function runAutoLoop() {
+    while (autoRunning && !shouldAutoStop()) {
+      await autoPlayGame();
+      if (!autoRunning) break;
+      await new Promise(r => setTimeout(r, 600)); // pause between games
+    }
+    stopAuto();
+  }
+
+  function startAuto() {
+    const betAmt = parseFloat(autoBetInput.value);
+    if (!isFinite(betAmt) || betAmt < MIN_BET || betAmt > MAX_BET) return;
+    if (betAmt > balance) return;
+
+    autoRunning = true;
+    autoStopping = false;
+    autoCurrentRound = 0;
+    autoWinCount = 0;
+    autoLossCount = 0;
+    autoStartBalance = balance;
+
+    appEl.classList.add('auto-running');
+    autoStartBtn.style.display = 'none';
+    autoStopBtn.style.display = 'block';
+    autoProgressEl.style.display = 'flex';
+    updateAutoStats();
+
+    runAutoLoop();
+  }
+
+  function stopAuto() {
+    autoRunning = false;
+    autoStopping = false;
+    appEl.classList.remove('auto-running', 'playing');
+    autoStartBtn.style.display = '';
+    autoStopBtn.style.display = 'none';
+    buildStages();
+    stripEl.scrollTo({ left: 0 });
+    updateCashout();
+    updateBalance();
+  }
+
+  autoStartBtn.addEventListener('click', startAuto);
+  autoStopBtn.addEventListener('click', () => { autoStopping = true; });
 })();
 </script>
 </body>
