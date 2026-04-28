@@ -1333,33 +1333,76 @@
   }
 
   /* ============= WIN/LOSS BANNER ============= */
-  .banner {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0.92);
-    background: rgba(20, 27, 34, 0.96);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--hairline);
-    border-radius: 12px;
-    padding: 28px 44px;
-    text-align: center;
-    z-index: 20;
+  /* ============= RESULT BANNER ============= */
+  .banner-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s, transform 0.3s;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    transition: opacity 0.25s;
   }
-  .banner.show {
+  .banner-overlay.show {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
     pointer-events: auto;
   }
-  .banner.win  { border-color: var(--green); box-shadow: 0 0 60px rgba(14,204,104,0.3), 0 24px 60px rgba(0,0,0,0.6); }
-  .banner.lose { border-color: var(--red);   box-shadow: 0 0 60px rgba(239,64,96,0.3), 0 24px 60px rgba(0,0,0,0.6); }
-  .banner-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
-  .banner.win  .banner-title { color: var(--green); }
-  .banner.lose .banner-title { color: var(--red); }
-  .banner-amt { font-size: 18px; font-weight: 600; color: var(--gold); }
+  .banner {
+    background: #141B22;
+    border: 1.5px solid var(--hairline);
+    border-radius: 14px;
+    padding: 24px 36px 20px;
+    text-align: center;
+    transform: scale(0.88) translateY(10px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    min-width: 220px;
+  }
+  .banner-overlay.show .banner {
+    transform: scale(1) translateY(0);
+  }
+  .banner-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+  .banner-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .banner-amt {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 2px;
+  }
+  /* Win state */
+  .banner-overlay.win .banner {
+    border-color: rgba(14,204,104,0.4);
+    box-shadow: 0 0 80px rgba(14,204,104,0.15), 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .banner-overlay.win .banner-title { color: var(--green); }
+  .banner-overlay.win .banner-amt { color: var(--green); }
+  .banner-overlay.win .banner-icon::after { content: '🎉'; }
+  /* Lose state */
+  .banner-overlay.lose .banner {
+    border-color: rgba(239,64,96,0.4);
+    box-shadow: 0 0 80px rgba(239,64,96,0.15), 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .banner-overlay.lose .banner-title { color: var(--red); }
+  .banner-overlay.lose .banner-amt { color: var(--text-mid); }
+  .banner-overlay.lose .banner-icon::after { content: '😔'; }
+
+  @media (max-width: 860px) {
+    .banner { padding: 20px 28px 16px; min-width: 180px; }
+    .banner-icon { font-size: 28px; margin-bottom: 6px; }
+    .banner-title { font-size: 14px; }
+    .banner-amt { font-size: 17px; }
+  }
 
   /* Tooltip / status text on top of stages-zone */
   .status {
@@ -1648,12 +1691,6 @@
             </div>
           </div>
 
-          <!-- Result banner -->
-          <div class="banner" id="banner">
-            <div class="banner-title" id="banner-title">You Won!</div>
-            <div class="banner-amt" id="banner-amt">+$0.00</div>
-          </div>
-
         </div>
       </main>
 
@@ -1685,6 +1722,15 @@
         </div>
         <div class="bottom-logo">MYBC</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Result banner — outside .app -->
+  <div class="banner-overlay" id="banner-overlay">
+    <div class="banner" id="banner">
+      <div class="banner-icon"></div>
+      <div class="banner-title" id="banner-title">You Won!</div>
+      <div class="banner-amt" id="banner-amt">+$0.00</div>
     </div>
   </div>
 
@@ -1830,6 +1876,7 @@
   const appEl      = document.querySelector('.app');
   const hintEl     = document.getElementById('hint');
   const statusEl   = document.getElementById('status');
+  const bannerOverlay = document.getElementById('banner-overlay');
   const bannerEl   = document.getElementById('banner');
   const bannerTitle= document.getElementById('banner-title');
   const bannerAmt  = document.getElementById('banner-amt');
@@ -2157,13 +2204,13 @@
   }
 
   function showBanner(kind, title, amount) {
-    bannerEl.classList.remove('win','lose','show');
-    bannerEl.classList.add(kind, 'show');
+    bannerOverlay.classList.remove('win','lose','show');
+    bannerOverlay.classList.add(kind, 'show');
     bannerTitle.textContent = title;
     bannerAmt.textContent = amount;
     setTimeout(hideBanner, 2000);
   }
-  function hideBanner() { bannerEl.classList.remove('show'); }
+  function hideBanner() { bannerOverlay.classList.remove('show','win','lose'); }
 
   function flashInput() {
     const r = betInput.parentElement;
