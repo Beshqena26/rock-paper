@@ -115,7 +115,7 @@
     flex-shrink: 0;
     background: var(--panel);
     border-right: 1px solid var(--hairline);
-    padding: 16px;
+    padding: 16px 16px 40px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -125,7 +125,7 @@
 
 
   /* Bet amount input */
-  .bet-amount-wrap { padding-top: 5px; display: flex; flex-direction: column; gap: 8px; }
+  .bet-amount-wrap { display: flex; flex-direction: column; gap: 6px; }
   .label {
     font-size: 12px;
     font-weight: 500;
@@ -133,52 +133,67 @@
     line-height: 12px;
   }
   .input-row {
-    height: 52px;
+    height: 46px;
     display: flex;
     align-items: center;
     border: 1px solid var(--input-border);
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
-    background: radial-gradient(ellipse 70% 30% at 50% 100%, var(--input-bg-from) 0%, var(--input-bg-to) 100%);
+    background: var(--input-bg-to);
+    transition: border-color 0.15s;
   }
+  .input-row:focus-within { border-color: var(--accent); }
   .input-row .currency {
-    width: 30px;
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--text-dim);
+    width: 34px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--accent);
     text-align: center;
+    flex-shrink: 0;
   }
   .input-row input {
     flex: 1;
+    min-width: 0;
     background: transparent;
     border: none;
     outline: none;
     font-family: inherit;
-    font-weight: 500;
-    font-size: 14px;
+    font-weight: 600;
+    font-size: 15px;
     color: var(--text);
-    padding: 0 5px;
+    padding: 0 4px;
+    -moz-appearance: textfield;
   }
+  .input-row input::-webkit-outer-spin-button,
+  .input-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .input-row input::placeholder { color: var(--text-dimmer); }
   .input-row .chips {
     display: flex;
-    gap: 5px;
-    padding: 0 15px 0 0;
+    gap: 4px;
+    padding: 0 6px;
+    flex-shrink: 0;
   }
   .input-row .chip {
-    width: 45px;
+    width: 38px;
     height: 28px;
-    background: var(--chip-bg);
-    border: 1px solid var(--chip-bg);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--hairline);
     border-radius: 6px;
-    color: var(--text-dimmer);
+    color: var(--text-mid);
     font-family: inherit;
-    font-weight: 500;
-    font-size: 12px;
+    font-weight: 600;
+    font-size: 11px;
     cursor: pointer;
     transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .input-row .chip:hover { color: var(--text); border-color: var(--text-dimmer); }
+  .input-row .chip:hover {
+    color: var(--accent);
+    border-color: rgba(251,206,4,0.3);
+    background: rgba(251,206,4,0.06);
+  }
 
   /* Place Bet button */
   .place-btn {
@@ -1122,7 +1137,16 @@
   }
 
   /* Manual panel (default) */
-  .manual-panel { display: flex; flex-direction: column; gap: 10px; }
+  .manual-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 4px;
+    flex: 1;
+  }
+  .manual-panel .bet-amount-wrap { margin-bottom: 4px; }
+  .manual-panel .place-btn,
+  .manual-panel .cashout-btn { margin-top: auto; }
   .app.auto-mode .manual-panel { display: none; }
 
   /* Auto panel (hidden by default) */
@@ -1543,6 +1567,123 @@
     .pad { padding: 10px; gap: 8px; }
     .side { padding: 10px 14px; }
   }
+
+  /* ===========================================================
+     LANDSCAPE PHONES — side-by-side, everything fits in viewport
+     =========================================================== */
+  @media (max-height: 500px) and (orientation: landscape) {
+    /* App fills viewport */
+    .app {
+      width: 100%; height: 100vh; height: 100dvh;
+      border-radius: 0; box-shadow: none;
+    }
+
+    /* Compact header */
+    .header { height: 36px; padding: 0 10px; }
+    .header-left .game-name { font-size: 11px; }
+    .header-left .game-name .ico { font-size: 12px; }
+    .header-balance { padding: 3px 10px 3px 7px; }
+    .header-bal-icon { font-size: 10px; width: 14px; height: 14px; }
+    .header-bal-value { font-size: 11px; }
+    .fairplay { font-size: 0; padding: 4px 6px; gap: 0; }
+    .fairplay::before { width: 10px; height: 12px; }
+    .header-right .info { width: 24px; height: 24px; font-size: 9px; }
+
+    /* Side-by-side layout like desktop */
+    .row {
+      flex-direction: row;
+      overflow: hidden;
+    }
+
+    /* Side panel — narrow left column, scrollable */
+    .side {
+      order: 0;
+      width: 248px;
+      flex: 0 0 248px;
+      border-right: 1px solid var(--hairline);
+      border-top: none;
+      padding: 8px 10px;
+      gap: 6px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Compact side panel elements */
+    .mode-toggle { height: auto; }
+    .mode-toggle button { height: 26px; font-size: 10px; }
+    .label { font-size: 10px; }
+    .input-row { height: 34px; border-radius: 6px; }
+    .input-row input { font-size: 12px; }
+    .input-row .currency { font-size: 11px; width: 26px; }
+    .input-row .chip { width: 30px; height: 22px; font-size: 9px; border-radius: 4px; }
+    .place-btn, .cashout-btn { height: 34px; font-size: 11px; }
+    .auto-start-btn, .auto-stop-btn { height: 32px; font-size: 11px; }
+    .auto-section { padding: 6px 8px; }
+    .auto-section-label { font-size: 9px; margin-bottom: 4px; }
+    .auto-chip { padding: 4px 3px; font-size: 9px; }
+    .auto-pick-chip { height: 28px; font-size: 13px; }
+    .auto-stop-input { height: 24px; font-size: 10px; }
+    .bet-amount-wrap { padding-top: 2px; gap: 4px; }
+
+    /* Main — fills remaining width */
+    .main {
+      order: 1;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+
+    /* Board fills the main area */
+    .board { flex: 1; display: flex; flex-direction: column; }
+
+    /* Stages — fill available height */
+    .stages-zone {
+      flex: 1;
+      height: auto;
+    }
+    .stages-track { padding: 6px 0; height: 100%; }
+    .center-line { height: 30px; }
+    .status { display: none; }
+
+    /* Compact cards */
+    .stage { width: 100px; height: 100%; padding: 4px 1px; }
+    .card {
+      width: 50px; height: 64px;
+      border-radius: 6px;
+      box-shadow: 0 2px 0 0 var(--card-shadow);
+      transform: none;
+    }
+    .card-emoji { width: 32px; height: 42px; }
+    .mult { width: 52px; height: 18px; font-size: 9px; }
+
+    /* Compact pick buttons */
+    .player-zone { height: 70px; padding-bottom: 4px; }
+    .pad { padding: 8px; gap: 6px; border-radius: 10px; }
+    .pick-btn { width: 42px; height: 42px; border-radius: 8px; }
+    .pick-btn .ico { width: 22px; height: 22px; }
+
+    /* Hide footer */
+    .bottom { display: none; }
+
+    /* Landscape animations */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+    @keyframes flip {
+      0% { transform: rotateY(0); }
+      50% { transform: rotateY(90deg); }
+      100% { transform: rotateY(0); }
+    }
+    .card.lose-glow { animation: shake 0.3s; }
+    .card.flip { animation: flip 0.4s ease; }
+
+    /* Banner compact in landscape */
+    .banner { padding: 14px 24px 12px; min-width: 160px; }
+    .banner-icon { font-size: 24px; margin-bottom: 4px; }
+    .banner-title { font-size: 13px; }
+    .banner-amt { font-size: 15px; }
+  }
 </style>
 </head>
 <body>
@@ -1573,8 +1714,8 @@
 
         <!-- MANUAL PANEL -->
         <div class="manual-panel">
-          <div class="bet-amount-wrap">
-            <div class="label">Bet Amount</div>
+          <div class="auto-section">
+            <div class="auto-section-label">Bet Amount</div>
             <div class="input-row">
               <span class="currency">$</span>
               <input id="bet-input" type="number" min="1" max="100" step="0.01" value="10.00" placeholder="1.00" />
@@ -1582,6 +1723,10 @@
                 <button class="chip" id="half-btn">1/2</button>
                 <button class="chip" id="double-btn">2x</button>
               </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;">
+              <span style="font-size:10px;color:var(--text-dim);">Min: $1.00</span>
+              <span style="font-size:10px;color:var(--text-dim);">Max: $100.00</span>
             </div>
           </div>
 
@@ -1693,35 +1838,35 @@
 
         </div>
       </main>
+    </div>
 
-      <!-- Bottom bar -->
-      <div class="bottom">
-        <div class="bottom-icons">
-          <div class="ic sound-toggle" id="sound-toggle" title="Toggle Sound">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-              <path class="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
-            </svg>
-          </div>
-          <div class="ic" title="Settings">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </div>
-          <div class="ic" title="Fullscreen">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/>
-            </svg>
-          </div>
-          <div class="ic" title="Favorite">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-          </div>
+    <!-- Bottom bar — child of .app, below .row -->
+    <div class="bottom">
+      <div class="bottom-icons">
+        <div class="ic sound-toggle" id="sound-toggle" title="Toggle Sound">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path class="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
         </div>
-        <div class="bottom-logo">MYBC</div>
+        <div class="ic" title="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
+        <div class="ic" title="Fullscreen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/>
+          </svg>
+        </div>
+        <div class="ic" title="Favorite">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
       </div>
+      <div class="bottom-logo">MYBC</div>
     </div>
   </div>
 
