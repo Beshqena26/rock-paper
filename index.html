@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
 <style>
   /* ===================================================================
      MYBC Originals — Rock Paper Scissors
@@ -1982,11 +1983,11 @@
       <h2>Game Info</h2>
       <div class="modal-payout-box">
         <span class="label">Max Win</span>
-        <span class="value">$10,000.00</span>
+        <span class="value" id="info-max-win">$10,000.00</span>
       </div>
       <div class="modal-payout-box">
         <span class="label">Bet Range</span>
-        <span class="value">$1.00 — $100.00</span>
+        <span class="value" id="info-bet-range">$1.00 — $100.00</span>
       </div>
       <div class="info-box">
         <span class="info-icon">🎮</span>
@@ -2003,27 +2004,20 @@
         <li><strong>Cancel</strong> — before first pick, cancel to get your bet back.</li>
       </ul>
       <h3>Rules</h3>
-      <ul>
+      <ul id="info-rules">
         <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
-        <li>Each win compounds the multiplier up to 100x.</li>
+        <li>Each win compounds the multiplier — see table below.</li>
         <li>Ties don't count — extra cards are added dynamically.</li>
-        <li>7 wins = Maxed Out (100x). Must win 1 round to cash out.</li>
+        <li id="info-rule-maxout">Win all stages to max out. Must win 1 round to cash out.</li>
       </ul>
       <h3>Multiplier Table</h3>
-      <table class="mult-table">
+      <table class="mult-table" id="info-mult-table">
         <tr><th>Win</th><th>Multiplier</th><th>$100 bet</th></tr>
-        <tr><td>Win 1</td><td>1.93x</td><td>$193</td></tr>
-        <tr><td>Win 2</td><td>3.73x</td><td>$373</td></tr>
-        <tr><td>Win 3</td><td>7.20x</td><td>$720</td></tr>
-        <tr><td>Win 4</td><td>13.89x</td><td>$1,389</td></tr>
-        <tr><td>Win 5</td><td>26.83x</td><td>$2,683</td></tr>
-        <tr><td>Win 6</td><td>51.79x</td><td>$5,179</td></tr>
-        <tr><td>Win 7</td><td>100.00x ⭐</td><td>$10,000</td></tr>
       </table>
       <h3>House Edge &amp; RTP</h3>
       <div class="info-box">
         <span class="info-icon">📊</span>
-        <p><strong>RTP: 96.5%</strong> — House edge is 3.5% per round. Base multiplier is 1.93x. 7 wins reaches 100x. Max bet $100, max win $10,000.</p>
+        <p id="info-rtp"><strong>RTP: 96.5%</strong> — House edge is 3.5% per round.</p>
       </div>
       <h3>Tips</h3>
       <ul>
@@ -2081,20 +2075,42 @@
 <script>
 (function() {
   /* =============================================================
-     GAME LOGIC
+     RGS CONFIG (loaded at boot from /api/v1/odds + /api/v1/init-demo)
      ============================================================= */
-  const NUM_STAGES = 7;
-  const MAX_BET = 100;
-  const MIN_BET = 1;
-  const MAX_WIN = 10000;
-  const BASE_MULT = +(Math.pow(100, 1/7)).toFixed(4); // ~1.9307 → 100x at win 7
+  const RGS = (window.RGS_CONFIG && window.RGS_CONFIG.apiBase) || '';
+  let SESSION_TOKEN = null;
+  let CURRENT_ROUND_ID = null;
+
+  // Defaults; replaced by /api/v1/odds response on boot.
+  let NUM_STAGES = 7;
+  let MAX_BET = 100;
+  let MIN_BET = 1;
+  let MAX_WIN = 10000;
+  let BASE_MULT = +(Math.pow(100, 1/7)).toFixed(4);
   const CHOICES = ['rock','paper','scissors'];
+
+  async function rgsFetch(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers || {});
+    if (SESSION_TOKEN) opts.headers['Authorization'] = 'Bearer ' + SESSION_TOKEN;
+    const res = await fetch(RGS + path, opts);
+    let body = null;
+    try { body = await res.json(); } catch(_) {}
+    if (!res.ok) {
+      const msg = (body && (body.error_description || body.error_code)) || ('HTTP ' + res.status);
+      throw new Error(msg);
+    }
+    return body;
+  }
+  // Expose for debugging / auto-mode etc.
+  window.RGS = { fetch: rgsFetch, get token(){return SESSION_TOKEN;}, get roundId(){return CURRENT_ROUND_ID;} };
   const EMOJI   = { rock: '✊', paper: '✋', scissors: '✌️' };
   const HAND_IMG = { "rock":     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE8AAABgCAYAAABczi9lAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAUh0lEQVR4nO2dC5Tc1HnHtWuvjR/4kQAFJw6kpC52ckJMCIWEJOA0YEMwkBJOepyGFErzaE+NTUgNweCA0wTa5sUjDa2bOEkh4OVhHg62cRwIJTxiY2yz2u9KMyONRqN537mj0ZVGq5np+bRas7ueXWa1jxm31Tn/s/bOSHv1031897vf/SQILTx27Ngh2LYtOLY5zbHNsz2e3+xx+juP07THqe1xWvI47fE4/XHFKn3StsrTbIv758TkyFHX27Jli2A5ti+bV/plD/33qlWrhP8Vx6+febrT5WyVx+kLHqd9Hqf1UeR5nD3r2Obptm0JkUhjePiZw60ul1vzHW4tcrn1Dvw//r4t4K1be4Owa9eu0bX7Wf/n7t27fd1///1Hzn/6mSeFPTt3nJ5NRp/xOK29DbThyrrc/ARjzL/+zt39f2vPzh1zEoq0xuN0m8ep6nHqBt/Hh5JwOet2Ofvcvtdenfnczl3Cdddd1xp49957b39z49YCl5ufdLm51uXmd1xufs/l7DsuZze43PyUw60THcfprFQqwksv//eR80uF9Gc8TnNjhDZYOZebH+ivTZbgcrbC41Ru4kHUPM4OOLZ58R133NEx6aCOO+444bbbbjui2zfe2vHqS787z+Pslx6nhZELyvBnuWoXnzUZ/RQhRFi7dq0vm2UOunZocL5czl6xrNJMXi5O8zjtHeP1vN/tefau2zfe2nXNNddMHrwFCxb0d7r9Hfu7gmbRN5YbrVhFNx5XbiGETEOIXrmwZTzgBmqRY5a+WCqVBKuU+3mIh4G19Gd79uzpmnBoJ5xwgnDhhRcKl112meBwH9wnXZsmwtYYp1yoSpK0IRqNCiajp7jlYmq8AE2aeZEx1pFK6lf2OcVQD+D1116+7YILLhBQE3ZceumlR2pc1WLYR5XHe7O0YLjxePzT6XRayKX0G6t2qBseXKP7DMM4OZ02jmd5g4W8TqVSLn/IsqyJh+fY5seqFg1bsPpQsbqmKocMw5hhGMY8XsyOZ9CoI3w9qV2ezWY7kgnlqbDXwZEY4XV1dTXUtGnTxg4P7SSPU21iwNF61WJ1q5SryyTyObTTdE394XjhpY3kZlVVBVkmayu8ELJc1HK4dVq/BeFbEXNQA7Zhd3f32OB95pKVncHgMCHgvEE3HFdiOxCepqnnO6V8dTzXy2VST6lqTIhEpXNKhbQXEl7ds8y/drhv9nyiarGEx1nK42ynY5truru7ZzUF7frrrxf27t0rHN7/ysqJBucFovm0qWnauw3DmJVL6fp4rlXMpXqCUXx+1khQ/F24QY09wMslweP5e4Z/lknEep7fu3vl3r17O5DN3r17hFNPPfVoeJs3b/anNx5nL08WvIpVrMfj8S/hwBFXYtvDDhxYY0yaywHAAgAQVEU+GPZaLmfPWyYTnFL+WyPA7XO5+a8Ot2ZjU166dGljeJ5l/rnH2biakzeK+pxCPa6oDxq6LsQi0q2uFbqvwj60Iorie3p6egSZQOgH4XLWk81mhWwyuX60a7jc/KXD7c4zzjhjBHicPTRZ4LxAhq5FNDUuRCX5qjLLhoZXMQv1np6es958800BRPEetxwaXkTTNEGJyl8d/QGwms1LVw2Bd8455wgXXXSR8NAvfj7X46w42fByKb1PluUFUUk+u5DVQ8ND80cUxQsCeHdWyrmw8CQctaMy+UoT33/t2muvfct+2bNnjz8su9xcGcLTUR9TQW1aL2T1miiKZ2CTyxrxWnh4tA4AlyA8sffNW2yWCQtvvyzLAiG9f9fEA+izrfKH34L33N4AHvv2ZNc616Z1ljdqAPBhURTfkdZjzjjhXR7Au3kc8HYG8G5qpg92bPMbR9c8m+4Y+aR8oPEDLOSTtZ6eno+Iojg3ravmW9cPBW91AO8OpxSu/+xzSv8uywThbW6m6bucPToc3kzX9v1iI9YYpxxuZPSGKZ/zm+2ZPT09cw1NKYWFh7UEAFYG8H4wjj7vZoQHIP6smZpXtdjhIfDQuelx6huajRRXYmUAsdek2DR8f11opVOJKgCcJori/ExS4eOxGUVRPF8URYH0io+GNXvKpeKViqKgufPbJs9JD4Hnct9f19BXh3NSURQfI4SsUKJybTwekT6nhA/CJYQcL4riyboW87BGo8nC8kY9n0nUDF2tGLpqZY2E1/+wGl/LNvNVURSXIbyoTPaHKxfro/ncBxRF6YpFJKXJa5jD4S0ZaWqDNyWK4lZCyDsAoIDNo2qXfDmlPE6T6pm0jjXKVyFj1Fk+7Qs/w//j5ylDqytKtC4B0eOKhgs5p/VKZHckFn0gGo3ekkqlPp9Op8/P5XLvKxQKi3VdPzMSiWxQonIaH+Dwcpk0UxJF8SQAmJuIxfJh4Nklmi7kcserqrpYV6NWk+cNhVexiu8fCR7aYgBwH06DAMTnkwmlnk5odZlIVdILcULILkLIFgC4CwD+CQB+RAjZCgA/JYTcTQjZAABfBoCrAOBjAPC+RCIhpFIpIZPJCGjdU5oXbF6aZfPSuxzb/FPHNk+h+dw0/FzTtJNlAi+UCukh5cplklFRFGeKorgca2mYllCk2ecopYKiKJfmUlpT51QtmjoCb+fOnYJJc8tGgpfLJBHe3QhPkqQ1hJCXVTV2u67r5xmGMQetc1Q8HvelJjQB4Wh6IPxcVTo0VenUVGW6pion5TKp5byYvZoX0xsqZmGLaxWwv4kHjlcEYVas4u9ZMXNVJpPqNAxjQSwi7RoAiGVNJY1n0UMDAF8bDrZZZVLGN/EByTL5Di82N1pXLXrwCLzt25/CGzy9wgu14RY8NllZJh4AXInwdF0X8EmZjAq4LoqrVy5n613OfuBy9kOXsztdzr7pcrbJ5exul7P7gykfwgGPU5zBjMUwxlWvhyvl8rxigc6WifQodhXYZehxbZOmqR2SBI+H8ee5Nq3F5MhZwWCxv9nzqhZ75Ai8x7Y/IaiqelKZZe1g6Pb7qlhEqhHS+0YkEvm8JEmduICTTiVmW6xwlcfpYx6n+QEQA7UWfw6uweNdKRtU4F0mLczWNG2+rkYVHGQSicQF8bgyT4tHQ00pS4UsUaLRrmg0+sfJeKzabJ/p8kFG8kMPPiTg6JdPJzN2idbVWBSbaZQQ8gXG6AzLNNElv8Dj7B89TpWJgBFGNsvdjt1BJBK5M6klMrIsH6coytXFXDLU9RJ6fLMkSQLphQ3WKKP6MFUrVunPhsObTgh5EwBwpQs7/4VY0yyTzahYxS9XrYlzyXvhlTAMfYaiRC8ihPwkEol0yAR2hKndTrlgJxKJJZIkzYzK5PAYzpU45zOHwMP+jIjS4xKQTZoa7zSLTCiz7DKP0+cn21ngNS+H0eJ7dF1fLknSRyVJWprVNb+rGasyKeNhdMhGo9FVaFs2fy7bdMUVVwhHwZOJtFom0jQ9rmEQzpeCSKV6G4mXWemPcrncDEmCTkJ670GfXoha52ia9sFkOtkZi0jPN1tzcSURF8aGeJKffPJpAZ8CDtm5THK6RVN3YdtuA1j1YU/9Dcs0OzDQJxqTTzGOOBWaFy6QJxPxe1RV7YhGo5fkM4lqM9NNBGyy/B3FYlFYsmSJMMRI5pwLtlXucjn7aesh0YayeelruMaKYRaSBPeF8RwXC3lQFW2eJElzYhHpUH+0wdvDozR/KJ1Oz8lkUkPh7UavilWehrZaqwF5I+twySzO9dcasllBluVNND82w9hkWaqp8bNxxAaA20ebNw8Bl08X1Vj0rK1btwpbt/5UWLRo0dCa53L2tTYaGOpDxeyKVTo3n8niTS8DgC5ZlmcS0vtCozlvwxpHs4wQ8un+WRJ8zNBVuxm7jubTViQSufT1Nw4IQ46FCxf6evG3ez40EfEo3uSozynn/gabaiaVXgIACQD4KvrfJEk6RSbwe6s0cg3CmYehaz2JROJsDDQK5udb3m7hCb0/mZSRVdXYJTgDOXBgGLwgSHF6ENpabzdV7VLNLRdvNnStAwBOBoAeAEADvgQAHw/m2vMA4IdZI2FhH4i1CYVAM0lNj8mRW0VRnIduq35wgB7jz6qK7A58P6jdAbQiurrqqqr+AWs52rp4ziuvvHI0PI/Tq9oBlHe08Oa+zjnv1HUdAb0cgBtQAQAuliSpA6Wq6imqqn5BVdVvqqp6o5rQViiKMgcdFYSQdwLAtwDguwAwG43raExeFZUJZNJ6DWth2cxhE63pmhqLRCJrFUWZhdEIAPAVADihATwLY1JeagNQddQge6vMy8Vr8MYjkcjxkiQ9MwzcgCoAgLOh9yNAXMTB6VYgnDGdhS4xAEgOOue3hJDTsEYRQmbjAwCAGwDg7wFgBf6ufzHIB741+BunHgXP5ebyQcHP7aCKx+kTTrm41DRNBPfeBjWukdDrIwPADgDoBoDnASANALURvp8KfIvTB5ryIJ0IAOuD7+B3cclg2VHwPE5vbgNgNYxyd0rZf0vr6nJD1zo1TZuuqup1hJBME+DCCoG/BAC3AsD1AHATADwCALlh36tqmoqLVUfBe6ZFwKquTaMeZ/9RsYqXWSabjbYb6YXjAMS/AIB9kwitaUlAcAmhZpn0IzhSD4cXmSJYrmsVNNcqPMryxtpiLnlmLp+ZlctnhGwu3ZVOp9EheTsAEABxpKZWj8oEzY66EpWbBkBIbz2V1HFKNiZwuNSAPsOqXaw55eK5GI4xHN5kTPw9f+OITXe7nP2zx9lfOuXiknw2PT2XSWFHjP3KLOycAeD70H+MCAyF/kV0sw8EbuNPvDH8HS4s4Y3GlZgv/K6mKj4w/BwduwPmSMUq+YtR+LkskzqAGPwNsS4T8M+nqaS/pDnIgK45tnkuetCHw3MmuO/ajf1o1aLnu9yah2GqaA7hfBSdDqqqXgAAPwtGv+rbPX28GTQjRg37GuS5HrDxxrKKhnBRo90X7o2bbHj1YSBxu8CDLmeX21Z5JnojstksjmSbAICNBg2bZ6kQLnRiElS1bfvMRvBCr9Z7YwKZlytm4asmo7ODZns6AOxs1FwNXR0Si9Im8M5oBG+qnZ2vW6xwLvrjVEXrIoTcAgDuALhCPjmmJjdF6rNt+92N4I1rL4QXSqzicnaTpirT/MUXQq4AADNlKOOOgZkkVWzbnt8IXqsWdWpllr03n0134UCSSCQur5RzU9GFhFHetu3ORvDE1hWK4Sh3n2Uyf7GpUs5d3wagGklEi6ERvFY7BWquVViH81heLqGT4tE2gDVcz40Erx0Ka7vcOhdtQpezJe3nlGUP+PCS2lHwftT6wlEMpThg2/Zs3MLkcfafrS7PYBVp9hsYTLRv32tHwVvb6sJ5gVzO1uEKnlsuntMOaykDduYT2351idDocGx/60DLwXn9hc1wXp7HeRm3vo8l/GEyVXms+5HTR4L33iCHSb0tZJn/0N906V1tMsNQuru7jxsJXtcUuqXqTeiQw60ZLmcXt0PT9Th9fMT9tsHGlf9qg0LWA1Udbn3U5ebJ7TDquty8YVR4VYv9VasL6Q1StWz+i8P9hamWtwiHWx98m5pnnuRx2mwU+FTosMOtDo/T37S4HFGH29O3bds2Gjy/oNvbAFo9kOty890ep79obTnYj9B0GhFeEHogmDSzuk066DrK5eblLTbgPUNXP45RBoPzYDU8fvPc7hlBurWWg/P6n/qtHqffb9nDs2nv+vU3NJftB6OkPMv8Quuh0QFhrqqftOzvW+ZN69ata4pdsHHPnlm16KsB+VbD2+NxGjrRzPjEig63Tl6/fn3z8PygH8v8qN9htx7eAcxO1oq/7XL2PWTRNDzML7BmzRrhicceR6/G3S0GVw9W9ULtJRun2Ldu27gYWSxbtkwY04HZLVxuzW7XeD1vklWxineed955Qqjjs1d+VvjJj38sPPv0E5hHKtbqm/GmVEzivLwgNLzBibhczs4MFq7r/wdUs3lpFRrF44aHyfgOHz4oSG8exFjlceV78o4B4W7NwwcPCYcOHRKWL18uTFjaS5ezM9rIOVmfBHAvcs7nTgyxYfCCoO93om+r1TfqTbxkl5uLsLlO+NHR0eFv2EAdPvjGdJezr7eDn82biBpnU/XFF36zdOD+JvXYv3//gCH9wSANeds4EkLoYMUq/QkmwJ6S48C+fnhBM+6qWvTaqjV44/LEZPuZSPWvgwwpl+eUcw//6sFfLrz66quFFStWTA28fa/vF4LFmetcbp7pcLvD5eZ8j7Ob292kqfGSH+9naMpTuXSmc+PGjcKUHv3N1sJ8U3uDRPd/wD7Qsc2lHmcneJyuCxIwtLw5Y5ian/CrmPPj/SRJ8kPYeqXeRzDTxoYNG6YW3qCa9/KwwrqBL/CBYBF9U5DJojalsDjDHAT1fDrZH3NMABPpDI863YYO4BtvvLFl8F5vfBND+5bJhOeUc36wdi6l13UtVleiGJwNdTga1nB1twRe0Gw7XLs9PM4YsY4R8RbDqPisn8oEax0CxZ8Y9Y6pl4ZuKyCPthLedNc+NhwG2Odpmjq85j3WSniYYy/ZajDNSm8zeHNdm2aOYXiPtxLeQtf2UyAdq/CeaCW8E117ot5S0BJ421sJb5FrHzuOgQbwnmwlvFNcm445Ecz/w9u/fyCZw4FjuOY93ZoZxr7XBXzjnVsuXtmiZcHxwtMB4PwWwdvXnzLJRm8KuyZ4reCxAK8PAH4hiuKigTwCUw5v3rx5R5LYLFy4UPjy9ded6HG2Mcjz2XJPSgOVDV3bpqrqRxYvXtw5f/58YUD4PreWHmvWrBlwjM7xOMOm/PDoL5KbEmF38ipmmOTl0mm4aweFwNrqWLx4sbB69eojumL1Z4SUoSHICzFBn8vZLtwuP7AhGr26ExzhjinqKKaF8zjd4nH2RYdb73nmqe2dWB58Z9vKlSt94Vuk2v6IRqNHXPX+Gz9tc5bDrfe63Py0x+nfVi36XXzTncfpr/G9ElW7iM5T3HmJUz5atYtFVJDI1ajaRXRCHPI4fTHY6nU/bsN3bPNzDrc+7HDrBIxffmt5wPbfRTkVx/8ABbsAmq9+47YAAAAASUVORK5CYII=", "paper":    "data:image/png;base64,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", "scissors": "data:image/png;base64,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" };
   const BEATS   = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
-  const stageMults = Array.from({length: NUM_STAGES}, (_, i) => +(Math.pow(BASE_MULT, i + 1)).toFixed(2));
+  // stageMults populated from /api/v1/odds — fallback to BASE_MULT^k until loaded.
+  let stageMults = Array.from({length: NUM_STAGES}, (_, i) => +(Math.pow(BASE_MULT, i + 1)).toFixed(2));
 
-  let balance = 1000;
+  let balance = 0;
   let bet = 0;
   let currentStage = -1; // -1 = not playing, otherwise index of stage to play
   let inFlight = false;
@@ -2242,27 +2258,45 @@
   /* =============================================================
      GAME FLOW
      ============================================================= */
-  function startGame() {
+  async function startGame() {
+    if (!SESSION_TOKEN) { setHint('Connecting to server...'); return; }
     const amt = parseFloat(betInput.value);
     if (!isFinite(amt) || amt < MIN_BET) { flashInput(); return; }
     if (amt > MAX_BET) { setHint(`Max bet is ${fmt(MAX_BET)}`); flashInput(); return; }
     if (amt > balance) { setHint('Bet exceeds balance.'); flashInput(); return; }
+
+    placeBtn.disabled = true;
+    setStatus('Placing bet...');
+    let resp;
+    try {
+      resp = await rgsFetch('/api/v1/bet', {
+        method: 'POST',
+        body: JSON.stringify({ amount: amt.toFixed(2) })
+      });
+    } catch (e) {
+      placeBtn.disabled = false;
+      setHint('Bet failed: ' + e.message);
+      return;
+    }
+
     bet = amt;
-    balance -= bet;
+    CURRENT_ROUND_ID = resp.round_id;
+    balance = parseFloat(resp.balance);
     updateBalance();
     if (typeof sndBet === 'function') sndBet();
 
-    // rebuild stages cleanly (removes any dynamic stages from ties)
+    // PF: the active round's seed_hash is now committed; show it.
+    if (resp.seed_hash) setServerSeedHash(resp.seed_hash);
+
+    // Rebuild stages clean (mults from server odds)
     buildStages();
 
-    // Provably fair: regenerate client seed if random mode
-    if (pfRandomEveryGame) newClientSeed();
+    // Provably fair: client seed managed server-side now; just reset display nonce for UI.
     nonce = 0;
 
     currentStage = 0;
     appEl.classList.add('playing');
     activateStage(0);
-    placeBtn.disabled = true;
     betInput.disabled = true;
     halfBtn.disabled = true; doubleBtn.disabled = true;
     pickBtns.forEach(b => b.disabled = false);
@@ -2280,6 +2314,7 @@
 
   async function onPick(choice) {
     if (inFlight || currentStage < 0 || winCount >= NUM_STAGES || autoRunning) return;
+    if (!CURRENT_ROUND_ID) return;
     if (typeof sndClick === 'function') sndClick();
     inFlight = true;
     pickBtns.forEach(b => b.disabled = true);
@@ -2287,27 +2322,47 @@
     const stage = getStage(currentStage);
     const topCard = stage.querySelector('[data-role="top"]');
     const botCard = stage.querySelector('[data-role="bottom"]');
-
-    // CPU choice via Provably Fair HMAC-SHA256
-    const cpuChoice = await getProvablyFairChoice();
     setStatus('Revealing...');
+
+    let resp;
+    try {
+      resp = await rgsFetch('/api/v1/round/' + CURRENT_ROUND_ID + '/play', {
+        method: 'POST',
+        body: JSON.stringify({ choice: choice })
+      });
+    } catch (e) {
+      inFlight = false;
+      pickBtns.forEach(b => b.disabled = false);
+      setHint('Play failed: ' + e.message);
+      return;
+    }
+
+    // Server-revealed CPU choice from the just-played stage.
+    const lastStage = resp.stages[resp.stages.length - 1];
+    const cpuChoice = lastStage.cpu;
+    const outcome = lastStage.outcome;
+    nonce = lastStage.nonce + 1;
 
     setTimeout(() => {
       revealCard(topCard, cpuChoice, null, true);
       revealCard(botCard, choice);
-
       setTimeout(() => {
-        let outcome;
-        if (cpuChoice === choice) outcome = 'tie';
-        else if (BEATS[choice] === cpuChoice) outcome = 'win';
-        else outcome = 'lose';
-
-        resolveOutcome(currentStage, outcome, topCard, botCard);
+        // Sync local state from server response
+        if (resp.balance != null) {
+          balance = parseFloat(resp.balance);
+          updateBalance();
+        }
+        // PF: terminal rounds reveal server_seed; capture for "Reveal" button + roll forward.
+        if (resp.status && resp.status !== 'active') {
+          if (resp.server_seed) prevServerSeed = resp.server_seed;
+          if (resp.next_seed_hash) setServerSeedHash(resp.next_seed_hash);
+        }
+        resolveOutcome(currentStage, outcome, topCard, botCard, resp);
       }, 600);
     }, 250);
   }
 
-  function resolveOutcome(idx, outcome, topCard, botCard) {
+  function resolveOutcome(idx, outcome, topCard, botCard, resp) {
     const stage = getStage(idx);
 
     if (outcome === 'tie') {
@@ -2317,15 +2372,12 @@
       stage.classList.remove('active');
 
       currentStage = idx + 1;
-      // don't update cashout — multiplier stays the same
+      // multiplier unchanged on tie
 
-      // If we ran out of card slots, add a new one dynamically
       if (currentStage >= getTotalStages()) {
         const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
         addStage(multVal);
       }
-
-      // Update ALL remaining stage labels
       for (let s = currentStage; s < getTotalStages(); s++) {
         const effIdx = winCount + (s - currentStage);
         const label = getStage(s).querySelector('[data-role="mult"]');
@@ -2349,31 +2401,32 @@
       setMultState(idx, 'green');
       if (typeof sndWin === 'function') sndWin();
 
-      winCount++;
+      // Trust server's win_count and current_multiplier.
+      winCount = resp.win_count;
       currentStage = idx + 1;
-      bestMult = Math.max(bestMult, stageMults[currentMultIndex()]);
+      bestMult = Math.max(bestMult, parseFloat(resp.current_multiplier) || 0);
       updateCashout();
 
-      if (winCount >= NUM_STAGES) {
-        // True max out — won all 10 rounds
+      // Server may auto-cashout (max win or MaxPayout cap) → status becomes terminal.
+      const terminal = resp.status && resp.status !== 'active';
+
+      if (terminal) {
         setTimeout(() => {
-          const payout = currentPayout();
-          balance += payout;
-          updateBalance();
-          wins++;
-          if (typeof sndMaxWin === 'function') sndMaxWin();
-          showBanner('win', 'Maxed Out!', `+${fmt(payout)}`);
+          if (resp.payout != null) {
+            const payout = parseFloat(resp.payout);
+            wins++;
+            if (typeof sndMaxWin === 'function') sndMaxWin();
+            showBanner('win', resp.status === 'won' ? 'Maxed Out!' : 'Cashed Out', `+${fmt(payout)}`);
+          }
           endGame();
           inFlight = false;
         }, 700);
       } else {
-        // If we ran out of card slots, add a new one dynamically
         if (currentStage >= getTotalStages()) {
           const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
           addStage(multVal);
         }
-        const nextMultVal = stageMults[nextMultIndex()];
-        // Update ALL remaining stage labels
+        const nextMultVal = parseFloat(resp.next_multiplier) || stageMults[winCount] || 0;
         for (let s = currentStage; s < getTotalStages(); s++) {
           const effIdx = winCount + (s - currentStage);
           const label = getStage(s).querySelector('[data-role="mult"]');
@@ -2392,7 +2445,7 @@
       return;
     }
 
-    // lose — no modal, just visual feedback + reset
+    // lose
     topCard.classList.add('win-glow');
     botCard.classList.add('lose-glow');
     stage.classList.remove('active');
@@ -2406,36 +2459,55 @@
     }, 700);
   }
 
-  function cashOut() {
+  async function cashOut() {
     if (inFlight) return;
+    if (!CURRENT_ROUND_ID) return;
 
-    // Cancel bet — no picks made yet, return full bet
-    if (currentStage === 0 && winCount === 0) {
-      balance += bet;
-      updateBalance();
-      if (typeof sndClick === 'function') sndClick();
-      endGame();
-      setStatus('Bet cancelled');
+    // No wins, no stages played → cancel-and-refund.
+    // Wins → cashout. Mid-tie-chain (no wins, stages played) → blocked (must play through).
+    if (winCount <= 0 && currentStage > 0) {
+      setHint('Already in play — pick a hand or wait for a win to cash out.');
       return;
     }
 
-    // Normal cashout — must have at least 1 win
-    if (winCount <= 0) return;
-    const payout = currentPayout();
-    balance += payout;
+    inFlight = true;
+    const path = (winCount <= 0)
+      ? '/api/v1/round/' + CURRENT_ROUND_ID + '/cancel'
+      : '/api/v1/round/' + CURRENT_ROUND_ID + '/cashout';
+
+    let resp;
+    try {
+      resp = await rgsFetch(path, { method: 'POST' });
+    } catch (e) {
+      inFlight = false;
+      setHint((winCount <= 0 ? 'Cancel' : 'Cashout') + ' failed: ' + e.message);
+      return;
+    }
+    inFlight = false;
+
+    balance = parseFloat(resp.balance);
     updateBalance();
-    wins++;
-    if (typeof sndCashout === 'function') sndCashout();
-    showBanner('win', `Cashed Out at ${stageMults[currentMultIndex()].toFixed(2)}x`, `+${fmt(payout)}`);
+    if (resp.server_seed) prevServerSeed = resp.server_seed;
+    if (resp.next_seed_hash) setServerSeedHash(resp.next_seed_hash);
+
+    if (winCount <= 0) {
+      // Cancellation: bet refunded, no win sound.
+      if (typeof sndClick === 'function') sndClick();
+      setStatus('Bet cancelled');
+    } else {
+      const payout = parseFloat(resp.payout) || 0;
+      wins++;
+      if (typeof sndCashout === 'function') sndCashout();
+      showBanner('win', `Cashed Out at ${parseFloat(resp.current_multiplier).toFixed(2)}x`, `+${fmt(payout)}`);
+    }
     endGame();
   }
 
   function endGame() {
     currentStage = -1;
     winCount = 0;
-    // Provably fair: rotate server seed (old one can now be revealed)
-    newServerSeed();
-    // Reset board to starting position
+    CURRENT_ROUND_ID = null;
+    // Server rotates its seed automatically on next /bet — nothing to do here.
     buildStages();
     stripEl.scrollTo({ left: 0, behavior: 'smooth' });
     appEl.classList.remove('playing');
@@ -2462,6 +2534,153 @@
     r.style.borderColor = 'var(--red)';
     r.style.boxShadow = '0 0 0 2px rgba(221,65,65,0.3)';
     setTimeout(() => { r.style.borderColor=''; r.style.boxShadow=''; }, 600);
+  }
+
+  /* =============================================================
+     GAME INFO MODAL — populated from server state
+     ============================================================= */
+  function populateGameInfo(state) {
+    if (!state) return;
+    const cfg = state.config || {};
+    const odds = state.odds || {};
+    const mults = (odds.stage_mults || []).map(parseFloat);
+    const maxWin = parseFloat(cfg.max_payout) || 0;
+    const minBet = parseFloat(cfg.min_bet) || 0;
+    const maxBet = parseFloat(cfg.max_bet) || 0;
+    const rtp = parseFloat(cfg.rtp) || 0;
+    const numStages = odds.num_stages || mults.length;
+
+    const maxWinEl = document.getElementById('info-max-win');
+    if (maxWinEl) maxWinEl.textContent = fmt(maxWin);
+    const betRangeEl = document.getElementById('info-bet-range');
+    if (betRangeEl) betRangeEl.textContent = fmt(minBet) + ' — ' + fmt(maxBet);
+
+    const ruleEl = document.getElementById('info-rule-maxout');
+    if (ruleEl && mults.length) {
+      ruleEl.textContent = numStages + ' wins = Maxed Out (' + mults[mults.length-1].toFixed(2) + 'x). Must win 1 round to cash out.';
+    }
+
+    const tbl = document.getElementById('info-mult-table');
+    if (tbl) {
+      tbl.innerHTML = '<tr><th>Win</th><th>Multiplier</th><th>$100 bet</th></tr>';
+      mults.forEach((m, i) => {
+        const payout = Math.min(100 * m, maxWin);
+        const star = (i === mults.length - 1) ? ' ⭐' : '';
+        const row = document.createElement('tr');
+        row.innerHTML = '<td>Win ' + (i+1) + '</td><td>' + m.toFixed(2) + 'x' + star + '</td><td>' + fmt(payout) + '</td>';
+        tbl.appendChild(row);
+      });
+    }
+
+    const rtpEl = document.getElementById('info-rtp');
+    if (rtpEl && mults.length) {
+      const houseEdge = ((1 - rtp) * 100).toFixed(1);
+      const topMult = mults[mults.length-1].toFixed(2);
+      rtpEl.innerHTML = '<strong>RTP: ' + (rtp * 100).toFixed(1) + '%</strong> — House edge is ' + houseEdge + '% per stage. Base multiplier is ' + mults[0].toFixed(2) + 'x. ' + numStages + ' wins reaches ' + topMult + 'x. Max bet ' + fmt(maxBet) + ', max win ' + fmt(maxWin) + '.';
+    }
+  }
+
+  /* =============================================================
+     RGS BOOTSTRAP
+     ============================================================= */
+  async function rgsBoot() {
+    setStatus('Connecting...');
+    // 1. Resolve session token: from URL ?token=, or auto-init demo.
+    const urlParams = new URLSearchParams(window.location.search);
+    SESSION_TOKEN = urlParams.get('token');
+    if (!SESSION_TOKEN) {
+      try {
+        const init = await rgsFetch('/api/v1/init-demo', {
+          method: 'POST',
+          body: JSON.stringify({})
+        });
+        // init.url = "/play?token=...&demo=1"
+        const m = (init.url || '').match(/token=([^&]+)/);
+        if (m) SESSION_TOKEN = m[1];
+      } catch (e) {
+        setStatus('Cannot connect to server');
+        setHint(e.message);
+        return;
+      }
+    }
+    if (!SESSION_TOKEN) {
+      setStatus('No session');
+      return;
+    }
+
+    // 2. Pull state (balance + odds + active round if any).
+    let state;
+    try {
+      state = await rgsFetch('/api/v1/state');
+    } catch (e) {
+      setStatus('Cannot load state');
+      setHint(e.message);
+      return;
+    }
+
+    // Apply odds from server.
+    if (state.odds && state.odds.stage_mults) {
+      NUM_STAGES = state.odds.num_stages;
+      stageMults = state.odds.stage_mults.map(parseFloat);
+    }
+    if (state.config) {
+      MIN_BET   = parseFloat(state.config.min_bet);
+      MAX_BET   = parseFloat(state.config.max_bet);
+      MAX_WIN   = parseFloat(state.config.max_payout);
+    }
+    balance = parseFloat(state.balance);
+    updateBalance();
+
+    populateGameInfo(state);
+
+    // Provably-fair: trust server-side seed state.
+    if (state.client_seed) {
+      clientSeed = state.client_seed;
+      pfClientSeedInput.value = state.client_seed;
+    }
+    if (state.next_seed_hash) setServerSeedHash(state.next_seed_hash);
+
+    // Update bet input min/max & limit hints
+    if (betInput) {
+      betInput.min = MIN_BET.toString();
+      betInput.max = MAX_BET.toString();
+      if (parseFloat(betInput.value) < MIN_BET) betInput.value = MIN_BET.toFixed(2);
+    }
+    const minLabel = document.querySelector('.minmax-min');
+    const maxLabel = document.querySelector('.minmax-max');
+    if (minLabel) minLabel.textContent = 'Min: ' + fmt(MIN_BET);
+    if (maxLabel) maxLabel.textContent = 'Max: ' + fmt(MAX_BET);
+
+    buildStages();
+    setStatus('Place a bet to begin');
+    setHint('Enter Bet Amount');
+
+    // Resume an active round if the server has one.
+    if (state.active_round && state.active_round.status === 'active') {
+      // Player refreshed mid-round; fast-forward UI to current state.
+      const ar = state.active_round;
+      CURRENT_ROUND_ID = ar.round_id;
+      bet = parseFloat(ar.bet_amount);
+      winCount = ar.win_count;
+      currentStage = ar.stages.length;
+      appEl.classList.add('playing');
+      betInput.disabled = true;
+      halfBtn.disabled = true; doubleBtn.disabled = true;
+      // Replay each stage visually
+      for (let i = 0; i < ar.stages.length; i++) {
+        const s = ar.stages[i];
+        if (i >= getTotalStages()) addStage(stageMults[Math.min(i, stageMults.length-1)]);
+        const stage = getStage(i);
+        const top = stage.querySelector('[data-role="top"]');
+        const bot = stage.querySelector('[data-role="bottom"]');
+        revealCard(top, s.cpu, null, true);
+        revealCard(bot, s.choice, null, true);
+        setMultState(i, s.outcome === 'win' ? 'green' : s.outcome === 'lose' ? 'red' : null);
+      }
+      activateStage(currentStage);
+      pickBtns.forEach(b => b.disabled = false);
+      updateCashout();
+    }
   }
 
   /* =============================================================
@@ -2565,16 +2784,18 @@
     return Array.from(new Uint8Array(sig), b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // Generate new server seed + hash
-  async function newServerSeed() {
-    prevServerSeed = serverSeed;
-    serverSeed = randomHex(32);
-    serverSeedHash = await sha256(serverSeed);
-    pfServerHashEl.textContent = serverSeedHash;
-    nonce = 0;
+  // Server-driven PF: hash comes from the backend (next_seed_hash on /state, seed_hash on /bet response).
+  // newServerSeed is now a no-op kept for compatibility.
+  async function newServerSeed() { /* server rotates seed at /bet */ }
+
+  // Update the displayed pre-commit hash.
+  function setServerSeedHash(hash) {
+    if (!hash) return;
+    serverSeedHash = hash;
+    if (pfServerHashEl) pfServerHashEl.textContent = hash;
   }
 
-  // Generate new client seed
+  // Generate a fresh local client seed (display only — persisted to server via Save Seed).
   function newClientSeed() {
     clientSeed = 'demo_' + randomHex(8);
     pfClientSeedInput.value = clientSeed;
@@ -2589,9 +2810,9 @@
     return CHOICES[num % 3];
   }
 
-  // Initialize seeds
+  // Initial placeholder until rgsBoot pulls real values from /api/v1/state.
   newClientSeed();
-  newServerSeed();
+  if (pfServerHashEl) pfServerHashEl.textContent = 'awaiting server...';
 
   // Open/close PF modal
   function openPfModal() { pfModal.classList.add('show'); }
@@ -2621,18 +2842,35 @@
     newClientSeed();
   });
 
-  // Save seed
-  pfSaveBtn.addEventListener('click', () => {
-    clientSeed = pfClientSeedInput.value;
-    pfSaveBtn.textContent = 'Saved!';
-    setTimeout(() => pfSaveBtn.textContent = 'Save Seed', 1000);
+  // Save seed — persists chosen client_seed to the server so it's used in future bets.
+  pfSaveBtn.addEventListener('click', async () => {
+    const newSeed = pfClientSeedInput.value.trim();
+    if (!newSeed) return;
+    pfSaveBtn.textContent = 'Saving...';
+    pfSaveBtn.disabled = true;
+    try {
+      await rgsFetch('/api/v1/client-seed', {
+        method: 'POST',
+        body: JSON.stringify({ client_seed: newSeed })
+      });
+      clientSeed = newSeed;
+      pfSaveBtn.textContent = 'Saved!';
+    } catch (e) {
+      pfSaveBtn.textContent = 'Failed';
+      console.warn('save client seed failed:', e.message);
+    } finally {
+      setTimeout(() => { pfSaveBtn.textContent = 'Save Seed'; pfSaveBtn.disabled = false; }, 1200);
+    }
   });
 
-  // Reveal previous server seed
+  // Reveal the previously-revealed server seed (set on round terminal).
   pfRevealSeed.addEventListener('click', () => {
     if (prevServerSeed) {
-      pfServerHashEl.textContent = 'Seed: ' + prevServerSeed;
+      pfServerHashEl.textContent = 'Revealed: ' + prevServerSeed;
       setTimeout(() => pfServerHashEl.textContent = serverSeedHash, 5000);
+    } else {
+      pfServerHashEl.textContent = 'No revealed seed yet — finish a round first';
+      setTimeout(() => pfServerHashEl.textContent = serverSeedHash, 3000);
     }
   });
 
@@ -2940,76 +3178,97 @@
     return autoPickStrategy;
   }
 
-  // Auto play one complete game
+  // Auto play one complete game (server-driven via /bet → /play* → /cashout|terminal).
   async function autoPlayGame() {
     if (shouldAutoStop()) { stopAuto(); return; }
 
     const betAmt = parseFloat(autoBetInput.value);
     if (betAmt < MIN_BET || betAmt > MAX_BET || betAmt > balance) { stopAuto(); return; }
 
-    // Place bet
+    // Place bet via API
+    let resp;
+    try {
+      resp = await rgsFetch('/api/v1/bet', {
+        method: 'POST',
+        body: JSON.stringify({ amount: betAmt.toFixed(2) })
+      });
+    } catch (e) {
+      autoLossCount++;
+      autoCurrentRound++;
+      updateAutoStats();
+      return;
+    }
+
     bet = betAmt;
-    balance -= bet;
+    CURRENT_ROUND_ID = resp.round_id;
+    balance = parseFloat(resp.balance);
     updateBalance();
+    if (resp.seed_hash) setServerSeedHash(resp.seed_hash);
+
     buildStages();
-    if (pfRandomEveryGame) newClientSeed();
     nonce = 0;
     currentStage = 0;
     winCount = 0;
     appEl.classList.add('playing');
     activateStage(0);
-    updateCashout();
 
-    // Play rounds until game ends
+    if (typeof sndBet === 'function') sndBet();
+
     await autoPlayRounds();
   }
 
   async function autoPlayRounds() {
-    while (true) {
+    while (CURRENT_ROUND_ID) {
       if (autoStopping) {
-        // Force cashout if possible, otherwise lose
-        if (winCount > 0) {
-          const payout = currentPayout();
-          balance += payout;
+        // Force-resolve: cashout if we have wins, else cancel for refund.
+        try {
+          const path = winCount > 0
+            ? '/api/v1/round/' + CURRENT_ROUND_ID + '/cashout'
+            : '/api/v1/round/' + CURRENT_ROUND_ID + '/cancel';
+          const r = await rgsFetch(path, { method: 'POST' });
+          balance = parseFloat(r.balance);
           updateBalance();
-          autoWinCount++;
-        }
+          if (r.server_seed) prevServerSeed = r.server_seed;
+          if (r.next_seed_hash) setServerSeedHash(r.next_seed_hash);
+          if (winCount > 0) autoWinCount++;
+        } catch (_) {}
         endGame();
         autoCurrentRound++;
         updateAutoStats();
         return;
       }
 
-      if (winCount >= NUM_STAGES) {
-        // Maxed out
-        const payout = currentPayout();
-        balance += payout;
-        updateBalance();
-        autoWinCount++;
-        if (typeof sndMaxWin === 'function') sndMaxWin();
-        endGame();
-        autoCurrentRound++;
-        updateAutoStats();
-        return;
-      }
-
-      // Pick and reveal
       const choice = getAutoPick();
-      const cpuChoice = await getProvablyFairChoice();
-
       const stage = getStage(currentStage);
       const topCard = stage.querySelector('[data-role="top"]');
       const botCard = stage.querySelector('[data-role="bottom"]');
 
-      revealCard(topCard, cpuChoice, null, true);
+      let play;
+      try {
+        play = await rgsFetch('/api/v1/round/' + CURRENT_ROUND_ID + '/play', {
+          method: 'POST',
+          body: JSON.stringify({ choice: choice })
+        });
+      } catch (e) {
+        autoLossCount++;
+        endGame();
+        autoCurrentRound++;
+        updateAutoStats();
+        return;
+      }
+
+      const last = play.stages[play.stages.length - 1];
+      const outcome = last.outcome;
+      nonce = last.nonce + 1;
+
+      revealCard(topCard, last.cpu, null, true);
       revealCard(botCard, choice);
+      await new Promise(r => setTimeout(r, 450));
 
-      await new Promise(r => setTimeout(r, 500));
-
-      let outcome;
-      if (cpuChoice === choice) outcome = 'tie';
-      else if (BEATS[choice] === cpuChoice) outcome = 'win';
-      else outcome = 'lose';
+      // Sync local state from server
+      winCount = play.win_count;
+      balance = parseFloat(play.balance);
+      updateBalance();
 
       if (outcome === 'tie') {
         setMultState(currentStage, null);
@@ -3019,14 +3278,13 @@
           const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
           addStage(multVal);
         }
-        // Update remaining labels
         for (let s = currentStage; s < getTotalStages(); s++) {
           const effIdx = winCount + (s - currentStage);
           const label = getStage(s).querySelector('[data-role="mult"]');
           if (effIdx < stageMults.length) label.textContent = stageMults[effIdx].toFixed(2) + 'x';
         }
         activateStage(currentStage);
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 250));
         continue;
       }
 
@@ -3036,17 +3294,15 @@
         stage.classList.remove('active');
         setMultState(currentStage, 'green');
         if (typeof sndWin === 'function') sndWin();
-        winCount++;
         currentStage++;
         updateCashout();
 
-        // Check if reached cashout target
-        if (winCount >= autoCashoutTarget || winCount >= NUM_STAGES) {
-          const payout = currentPayout();
-          balance += payout;
-          updateBalance();
+        // Server may have auto-cashed-out (max win or MaxPayout cap).
+        if (play.status && play.status !== 'active') {
+          if (play.server_seed) prevServerSeed = play.server_seed;
+          if (play.next_seed_hash) setServerSeedHash(play.next_seed_hash);
           autoWinCount++;
-          if (winCount >= NUM_STAGES && typeof sndMaxWin === 'function') sndMaxWin();
+          if (play.status === 'won' && typeof sndMaxWin === 'function') sndMaxWin();
           else if (typeof sndCashout === 'function') sndCashout();
           await new Promise(r => setTimeout(r, 400));
           endGame();
@@ -3055,7 +3311,25 @@
           return;
         }
 
-        // Continue playing — set up next stage
+        // Reached the user's cashout target → cashout via API.
+        if (winCount >= autoCashoutTarget) {
+          try {
+            const co = await rgsFetch('/api/v1/round/' + CURRENT_ROUND_ID + '/cashout', { method: 'POST' });
+            balance = parseFloat(co.balance);
+            updateBalance();
+            if (co.server_seed) prevServerSeed = co.server_seed;
+            if (co.next_seed_hash) setServerSeedHash(co.next_seed_hash);
+          } catch (_) {}
+          autoWinCount++;
+          if (typeof sndCashout === 'function') sndCashout();
+          await new Promise(r => setTimeout(r, 400));
+          endGame();
+          autoCurrentRound++;
+          updateAutoStats();
+          return;
+        }
+
+        // Else continue to next stage.
         if (currentStage >= getTotalStages()) {
           const multVal = winCount < stageMults.length ? stageMults[winCount] : stageMults[stageMults.length - 1];
           addStage(multVal);
@@ -3066,7 +3340,7 @@
           if (effIdx < stageMults.length) label.textContent = stageMults[effIdx].toFixed(2) + 'x';
         }
         activateStage(currentStage);
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, 350));
         continue;
       }
 
@@ -3076,8 +3350,10 @@
       stage.classList.remove('active');
       setMultState(currentStage, 'red');
       if (typeof sndLose === 'function') sndLose();
+      if (play.server_seed) prevServerSeed = play.server_seed;
+      if (play.next_seed_hash) setServerSeedHash(play.next_seed_hash);
       autoLossCount++;
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 450));
       endGame();
       autoCurrentRound++;
       updateAutoStats();
@@ -3130,6 +3406,9 @@
 
   autoStartBtn.addEventListener('click', startAuto);
   autoStopBtn.addEventListener('click', () => { autoStopping = true; });
+
+  // Boot
+  rgsBoot();
 })();
 
 // Prevent double-tap zoom on iOS Safari
